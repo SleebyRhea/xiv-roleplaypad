@@ -53,14 +53,18 @@ const dbgLog = (what) => {
 
 /**
  * @param {Number} size
+ * @param {Number} offset
  * @returns {Boolean}
  */
-const isOverLimit = (size) => {
-	var r = Math.floor((size - 1) / (CHARACTER_LIMIT - CHAR_COUNT_OFFSET));
+const isOverLimit = (size, offset = 0) => {
+	var r = Math.floor(
+		(size - 1) / (CHARACTER_LIMIT - CHAR_COUNT_OFFSET - offset)
+	);
+
 	dbgLog(
 		`Math.floor((${
 			size - 1
-		} / (${CHARACTER_LIMIT} - ${CHAR_COUNT_OFFSET}))) = ${r}`
+		} / (${CHARACTER_LIMIT} - ${CHAR_COUNT_OFFSET} - ${offset}))) = ${r}`
 	);
 	return 1 <= r;
 };
@@ -98,9 +102,6 @@ const populatePreview = (box, preview, settings) => {
 			li.className = "overlimit";
 		}
 
-		li.appendChild(content);
-		li.appendChild(metadata);
-
 		li.onclick = function () {
 			if (li.classList.contains("copied")) {
 				li.classList.remove("copied");
@@ -110,6 +111,9 @@ const populatePreview = (box, preview, settings) => {
 			navigator.clipboard.writeText(content.textContent);
 			li.classList.add("copied");
 		};
+
+		li.appendChild(content);
+		li.appendChild(metadata);
 		list_objects.push(li);
 	});
 
@@ -119,19 +123,32 @@ const populatePreview = (box, preview, settings) => {
 /**
  * Split a string into lines each within the CHARACTER_LIMIT
  * @param {String} line
+ * @param {PreviewSettings} settings
  * @param {Boolean} singular
  */
-const processLine = (line, singular) => {
+const processLine = (line, settings, singular) => {
 	line = line.replace(/\s+/g, " ");
 
-	if (singular && line.length <= CHARACTER_LIMIT) {
-		dbgLog(`processLine: Line length(${line.length}) <= ${CHARACTER_LIMIT}`);
-		return [line];
+	var totalOffset = 0;
+	var finishLine = (input) => {
+		return input;
+	};
+
+	if (settings.ooc) {
+		totalOffset = 4;
+		finishLine = (input) => {
+			return "((" + input + "))";
+		};
 	}
 
-	if (!isOverLimit(line.length)) {
+	if (singular && line.length <= CHARACTER_LIMIT - totalOffset) {
+		dbgLog(`processLine: Line length(${line.length}) <= ${CHARACTER_LIMIT}`);
+		return [finishLine(line)];
+	}
+
+	if (!isOverLimit(line.length, totalOffset)) {
 		dbgLog(`Not over line limit: ${line.length}`);
-		return [line];
+		return [finishLine(line)];
 	}
 
 	dbgLog(`Over line limit: ${line.length}`);
@@ -144,14 +161,17 @@ const processLine = (line, singular) => {
 		count += word.length + 1;
 		dbgLog(`On word '${word}' [${count}]`);
 
-		if (isOverLimit(count)) {
+		if (isOverLimit(count, totalOffset)) {
 			dbgLog(`Breaking up words on: ${word}`);
 			count = 0;
+			results[on] = finishLine(results[on]);
 			results[++on] = "";
 		}
 
 		results[on] += word + " ";
 	});
+
+	results[on] = finishLine(results[on].replace(/[ \t]$/));
 
 	dbgLog("Final result:", results);
 
@@ -185,7 +205,7 @@ const formatLines = (lines, settings) => {
 			return;
 		}
 
-		result.push(...processLine(line, count == 1));
+		result.push(...processLine(line, settings, count == 1));
 	});
 
 	count = result.length;
@@ -216,8 +236,10 @@ const updateCount = (item, value) => {
 const makeModal = (name, onclick) => {
 	/** @type {HTMLDialogElement} */
 	var modal = document.querySelector(`#${name}`);
+	var icon = document.querySelector(`#${name}-icon`);
 
-	if (!modal) {
+	if (!modal || !icon) {
+		console.error(`makeModal: Missing either #${name} or ${name}-icon Element`);
 		return;
 	}
 
@@ -227,14 +249,14 @@ const makeModal = (name, onclick) => {
 		};
 	}
 
-	document.querySelector(`#${name}-icon`).onclick = (e) => {
+	icon.onclick = (e) => {
 		return onclick(modal, e);
 	};
 };
 
 const initialize = () => {
 	var timeoutID = null;
-	var preview_settings = new PreviewSettings();
+	const preview_settings = new PreviewSettings();
 
 	/** @type {HTMLTextAreaElement} */
 	const textbox = document.querySelector("#textbox");
@@ -246,7 +268,8 @@ const initialize = () => {
 	const filenameBox = document.querySelector("#filename");
 
 	textbox.value = localStorage.getItem(STORAGE_NAME) || "";
-	textbox.spellcheck = document.querySelector("#spellcheck").checked;
+	textbox.spellcheck = document.querySelector("#spellcheck")?.checked ?? true;
+	preview_settings.ooc = document.querySelector("#ooc")?.checked ?? false;
 
 	/** Place caret at end of content */
 	textbox.setSelectionRange(textbox.value.length, textbox.value.length);
@@ -304,21 +327,6 @@ const initialize = () => {
 			storeLocally(STORAGE_NAME, textbox.value);
 		}, 1000);
 	};
-
-	/**
-	 * Save textarea contents as a text file
-	 */
-	// document.querySelector("#save a").onclick = function () {
-	// 	this.download = (filenameBox.value || DEFAULT_FILE_NAME).replace(
-	// 		/^([^.]*)$/,
-	// 		"$1.txt"
-	// 	);
-	// 	this.href = URL.createObjectURL(
-	// 		new Blob([document.querySelector("#textbox").value], {
-	// 			type: "text/plain",
-	// 		})
-	// 	);
-	// };
 
 	/** Load contents from a text file */
 	document.querySelector("#open a").onclick = function () {
