@@ -1,41 +1,149 @@
-html, body {
-  height: 100%; box-sizing: border-box; margin: 0;
+html {
+	overflow: hidden;
+	height: 100%;
 }
-textarea {
-  height: calc(100% - 2rem); box-sizing: border-box;
-  border: none; outline: none; resize: none;
-  font-family: monospace;
+body {
+	background-color: #222;
+	color: white;
+
+	height: 100%;
+	overflow: auto;
+	box-sizing: border-box;
+	margin: 0;
+	font-size: 1rem;
 }
-#textbox {
-  border-right: 1px solid PaleTurquoise;
-  border-radius: 0px;
-  border-color: darkgray;
-  background-color: transparent;
-  width: 100%;
-  padding: 0.5em;
-  overflow-y: scroll;
+
+#editor {
+	height: 100%;
+	width: 100%;
+
+	& ul#preview,
+	ol#preview {
+		height: 60%;
+		box-sizing: border-box;
+		width: 100%;
+		border: none;
+		outline: none;
+		resize: none;
+		overflow-y: scroll;
+		font-family: monospace;
+		list-style-type: none;
+		padding-right: 1rem;
+		padding-left: 1rem;
+		overflow-wrap: break-word;
+
+		& li {
+			display: inline-flex;
+			/* padding: 10px; */
+			padding-top: 0.5rem;
+			padding-bottom: 0.5rem;
+			width: 100%;
+			border-bottom: 1px solid #666;
+
+			margin-right: 0;
+			margin-left: 0;
+		}
+
+		& span.content {
+			margin-left: 0;
+			margin-right: auto;
+		}
+
+		& span.metadata {
+			width: 5em;
+			padding-left: 2rem;
+			margin-left: auto;
+			margin-right: 0;
+			text-align: right;
+			white-space: pre-wrap;
+			color: #666;
+		}
+
+		& li.overlimit {
+			color: red;
+		}
+
+		& li.copied {
+			color: green;
+		}
+	}
+
+	& textarea {
+		position: fixed;
+		height: calc(40% - 4rem);
+		box-sizing: border-box;
+		/* border: none; */
+		outline: none;
+		resize: none;
+		font-family: monospace;
+		font-size: 1rem;
+	}
+
+	#textbox {
+		border: 3px solid #fff;
+		border-left: none;
+		border-right: none;
+		border-bottom: none;
+		width: 100%;
+		padding: 1em;
+		overflow-y: scroll;
+		background-color: #333;
+		color: white;
+	}
 }
+
 nav {
-  position: fixed; bottom: 0; left: 0;
-  box-sizing: border-box; width: 100%; height: 2rem; padding: 0 0.5em;
-  background-color: #eee; border-top: 1px solid silver;
-  line-height: 2rem; color: gray; font-family: sans-serif; font-size: 85%;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	box-sizing: border-box;
+	width: 100%;
+	height: 2rem;
+	padding: 0 0.5em;
+	background-color: #eee;
+	border-top: 1px solid silver;
+	line-height: 2rem;
+	color: gray;
+	font-family: sans-serif;
+	font-size: 85%;
 }
+
 #controls {
-  float: right;
+	float: right;
 }
-#save a {
-  text-decoration: none;
+
+#save a,
+#open a {
+	display: none;
+	text-decoration: none;
 }
+
 #open > input {
-  display: none;
+	display: none;
 }
+
 #about > form {
-  text-align: right;
+	text-align: right;
 }
+
 #about-icon {
-  text-decoration: none;
-  color: black;
-  font-weight: bold;
+	text-decoration: none;
+	/* color: black; */
+	font-weight: bold;
 }
-@media print { nav { display: none; } }
+
+#help > form {
+	text-align: right;
+}
+
+#help-icon {
+	text-decoration: none;
+	/* color: black; */
+	font-weight: bold;
+}
+
+@media print {
+	nav {
+		display: none;
+	}
+}

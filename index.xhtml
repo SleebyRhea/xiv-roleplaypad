@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 <head>
   <meta charset="utf-8" />
@@ -6,30 +5,32 @@
   <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,R0lGODlhEAAQAKEAAAAAAICAgP///wAAACH/
     C05FVFNDQVBFMi4wAwEAAAAh/hFDcmVhdGVkIHdpdGggR0lNUAAh+QQBZAADACwAAAAAEAAQAAACJIyPacLtvp5kEUwYmL00i81VXK
     eNgjiioQdeqsuakXl6tIIjBQAh+QQBZAADACwAAAAAEAAQAAACIIyPacLtvp5kcb5qG85iZ2+BkyiRV8BBaEqtrKkqslEAADs=" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" type="text/css" href="./style.css" />
+  <!-- <script type="text/javascript" src="https://livejs.com/live.js#html,css,js"></script> -->
 </head>
 <body>
-  <textarea id="textbox" autofocus="autofocus" placeholder="type here"></textarea>
-  <nav>
+	<div id="editor">
+		<ul id="preview"></ul>
+		<textarea id="textbox" autofocus="autofocus" placeholder="type here"></textarea>
+  </div>
+	<nav>
     <span id="stats">
       <span id="char-count">0</span> chars │
       <span id="word-count">0</span> words │
       <span id="line-count">0</span> lines
     </span>
     <span id="controls">
-      <input type="checkbox" id="fullwidth" />
-      <label for="fullwidth">80 Column</label> │
       <input type="checkbox" id="spellcheck" />
       <label for="spellcheck">spell-checking</label> │
-      <a href="#" id="print">print</a> │
       <span id="open">
         <input type="file" value="open" />
         <a href="#">open</a>
       </span>
       <span id="save">
-        <input id="filename" placeholder="browserpad.txt" />
+        <input id="filename" placeholder="rp-wordpad.txt" />
         <a href="#">save</a>
       </span> │
+      <a href="#" title="Shortcuts" id="help-icon">Ⓗ</a>
       <a href="#" title="About Browserpad" id="about-icon">ⓘ</a>
     </span>
   </nav>
@@ -40,6 +41,13 @@
     <p>The source code is <a href="https://github.com/Browserpad/browserpad">available on GitHub</a>.</p>
     <form method="dialog"><button>close</button></form>
   </dialog>
-  <script src="script.js"></script>
+  <dialog id="help">
+    <h2>Shortcuts</h2>
+    <p><code>Ctrl-s</code>: Save to a file</p>
+    <p><code>Ctrl-o</code>: Open a file</p>
+    <p><code>Ctrl-/</code>: Open this help dialog</p>
+    <form method="dialog"><button>close</button></form>
+  </dialog>
+  <script src="./script.js"></script>
 </body>
 </html>
