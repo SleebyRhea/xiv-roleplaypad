@@ -1,6 +1,7 @@
 const STORAGE_NAME = "rp-wordpad";
 const DEFAULT_FILE_NAME = "rp-wordpad.txt";
 const CHARACTER_LIMIT = 500;
+const DEBUGGING = false;
 
 /**
  * The amount of characters that make up: (##/##)
@@ -34,14 +35,20 @@ const calcStats = (box) => {
 
 var depth = 0;
 const dbgLogFn = (what, fn) => {
-	return (...arg) => {
-		console.log("DEBUG:", what);
-		return fn(...arg);
-	};
+	if (DEBUGGING) {
+		return (...arg) => {
+			console.log("DEBUG:", what);
+			return fn(...arg);
+		};
+	}
+
+	return fn;
 };
 
 const dbgLog = (what) => {
-	console.log("DEBUG", what);
+	if (DEBUGGING) {
+		console.log("DEBUG", what);
+	}
 };
 
 /**
@@ -50,8 +57,11 @@ const dbgLog = (what) => {
  */
 const isOverLimit = (size) => {
 	var r = Math.floor((size - 1) / (CHARACTER_LIMIT - CHAR_COUNT_OFFSET));
-
-	// dbgLog(`Math.floor((${size - 1} / (${CHARACTER_LIMIT} - ${CHAR_COUNT_OFFSET}))) = ${r}`)
+	dbgLog(
+		`Math.floor((${
+			size - 1
+		} / (${CHARACTER_LIMIT} - ${CHAR_COUNT_OFFSET}))) = ${r}`
+	);
 	return 1 <= r;
 };
 
@@ -89,7 +99,6 @@ const populatePreview = (box, preview) => {
 			li.classList.add("copied");
 		};
 		list_objects.push(li);
-		// list_objects.push(document.createElement("hr"));
 	});
 
 	preview.replaceChildren(...list_objects);
@@ -104,18 +113,16 @@ const processLine = (line, singular) => {
 	line = line.replace(/\s+/g, " ");
 
 	if (singular && line.length <= CHARACTER_LIMIT) {
-		console.log(
-			`processLine: Line length(${line.length}) <= ${CHARACTER_LIMIT}`
-		);
+		dbgLog(`processLine: Line length(${line.length}) <= ${CHARACTER_LIMIT}`);
 		return [line];
 	}
 
 	if (!isOverLimit(line.length)) {
-		console.log(`Not over line limit: ${line.length}`);
+		dbgLog(`Not over line limit: ${line.length}`);
 		return [line];
 	}
 
-	console.log(`Over line limit: ${line.length}`);
+	dbgLog(`Over line limit: ${line.length}`);
 
 	var words = line.split(" ");
 	var results = [""];
@@ -123,10 +130,10 @@ const processLine = (line, singular) => {
 	var on = 0;
 	words.forEach((word) => {
 		count += word.length + 1;
-		console.log(`On word '${word}' [${count}]`);
+		dbgLog(`On word '${word}' [${count}]`);
 
 		if (isOverLimit(count)) {
-			console.log(`Breaking up words on: ${word}`);
+			dbgLog(`Breaking up words on: ${word}`);
 			count = 0;
 			results[++on] = "";
 		}
@@ -134,7 +141,7 @@ const processLine = (line, singular) => {
 		results[on] += word + " ";
 	});
 
-	console.log("Final result:", results);
+	dbgLog("Final result:", results);
 
 	return results;
 };
@@ -269,7 +276,6 @@ const initialize = () => {
 
 		if (event.key == "-") {
 			var prior = textbox.selectionStart - 1;
-			console.log(prior, textbox.value.charAt(prior));
 
 			if (textbox.value.charAt(prior) === "-") {
 				event.preventDefault();
