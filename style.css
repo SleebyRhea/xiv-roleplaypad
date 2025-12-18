@@ -136,15 +136,8 @@ nav {
 	}
 }
 
-#about-icon {
+.navbar-icon {
 	text-decoration: none;
-	/* color: black; */
-	font-weight: bold;
-}
-
-#help-icon {
-	text-decoration: none;
-	/* color: black; */
 	font-weight: bold;
 }
 
