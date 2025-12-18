@@ -104,7 +104,9 @@ const processLine = (line, singular) => {
 	line = line.replace(/\s+/g, " ");
 
 	if (singular && line.length <= CHARACTER_LIMIT) {
-		console.log(`processLine: Line length(${line.length}) <= ${CHARACTER_LIMIT}`);
+		console.log(
+			`processLine: Line length(${line.length}) <= ${CHARACTER_LIMIT}`
+		);
 		return [line];
 	}
 
@@ -181,6 +183,30 @@ const formatLines = (lines) => {
  */
 const updateCount = (item, value) => {
 	document.querySelector("#" + item + "-count").textContent = value;
+};
+
+/**
+ * With a name, find an element on the DOM and assign it an onclick
+ * @param {String} name
+ * @param {(HTMLDialogElement)=>void} onclick
+ */
+const makeModal = (name, onclick) => {
+	/** @type {HTMLDialogElement} */
+	var modal = document.querySelector(`#${name}`);
+
+	if (!modal) {
+		return;
+	}
+
+	if (!onclick) {
+		onclick = (m) => {
+			return m.showModal();
+		};
+	}
+
+	document.querySelector(`#${name}-icon`).onclick = (e) => {
+		return onclick(modal, e);
+	};
 };
 
 const initialize = () => {
@@ -309,15 +335,9 @@ const initialize = () => {
 		textbox.spellcheck = this.checked;
 	};
 
-	/** Show the about dialog */
-	document.querySelector("#about-icon").onclick = function () {
-		document.querySelector("#about").showModal();
-	};
-
-	/** Show the help dialog */
-	document.querySelector("#help-icon").onclick = function () {
-		document.querySelector("#help").showModal();
-	};
+	// makeModal("settings");
+	makeModal("about");
+	makeModal("help");
 
 	window.onbeforeunload = function () {
 		storeLocally(STORAGE_NAME, textbox.value);
