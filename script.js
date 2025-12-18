@@ -1,5 +1,5 @@
-const STORAGE_NAME = "rp-wordpad";
-const DEFAULT_FILE_NAME = "rp-wordpad.txt";
+const STORAGE_NAME = "roleplaypad";
+const DEFAULT_FILE_NAME = "roleplaypad.txt";
 const CHARACTER_LIMIT = 500;
 const DEBUGGING = false;
 
@@ -65,14 +65,26 @@ const isOverLimit = (size) => {
 	return 1 <= r;
 };
 
+class PreviewSettings {
+	/**
+	 *
+	 * @param {Boolean} em_dash Rewrite -- into —
+	 */
+	constructor(em_dash = true, ooc = false) {
+		this.em_dash = em_dash;
+		this.ooc = false;
+	}
+}
+
 /**
  *
  * @param {HTMLTextAreaElement} box
  * @param {HTMLOListElement} preview
+ * @param {PreviewSettings} settings
  */
-const populatePreview = (box, preview) => {
+const populatePreview = (box, preview, settings) => {
 	var list_objects = [];
-	formatLines(box.value).forEach((line, i, self) => {
+	formatLines(box.value, settings).forEach((line, i, self) => {
 		var li = document.createElement("li");
 		var content = document.createElement("span");
 		var metadata = document.createElement("span");
@@ -149,12 +161,16 @@ const processLine = (line, singular) => {
 /**
  *
  * @param {HTMLTextAreaElement} box
+ * @param {PreviewSettings} settings
  */
-const formatLines = (lines) => {
+const formatLines = (lines, settings) => {
+	if (settings.em_dash) {
+		lines = lines.replace(/--/g, "—");
+	}
+
 	lines = lines.replace(/[ \t]+/g, " ");
 	var all_lines = lines.split(/\n/);
 	var count = 0;
-	var final_string = "";
 	var result = [];
 
 	all_lines.forEach((line) => {
@@ -169,7 +185,7 @@ const formatLines = (lines) => {
 			return;
 		}
 
-		result.push(...processLine(line, !count > 1));
+		result.push(...processLine(line, count == 1));
 	});
 
 	count = result.length;
@@ -218,6 +234,7 @@ const makeModal = (name, onclick) => {
 
 const initialize = () => {
 	var timeoutID = null;
+	var preview_settings = new PreviewSettings();
 
 	/** @type {HTMLTextAreaElement} */
 	const textbox = document.querySelector("#textbox");
@@ -233,8 +250,8 @@ const initialize = () => {
 
 	/** Place caret at end of content */
 	textbox.setSelectionRange(textbox.value.length, textbox.value.length);
+	populatePreview(textbox, previewbox, preview_settings);
 	calcStats(textbox);
-	populatePreview(textbox, previewbox);
 
 	/**
 	 * Keyboard shortcuts
@@ -243,10 +260,10 @@ const initialize = () => {
 	document.onkeydown = function (event) {
 		if (event.ctrlKey) {
 			switch (event.key) {
-				case "s":
-					document.querySelector("#save a").click();
-					event.preventDefault();
-					break;
+				// case "s":
+				// 	document.querySelector("#save a").click();
+				// 	event.preventDefault();
+				// 	break;
 				case "o":
 					document.querySelector("#open input").click();
 					event.preventDefault();
@@ -273,21 +290,6 @@ const initialize = () => {
 			this.value = text.substring(0, s) + "\t" + text.substring(e);
 			this.selectionStart = this.selectionEnd = s + 1;
 		}
-
-		if (event.key == "-") {
-			var prior = textbox.selectionStart - 1;
-
-			if (textbox.value.charAt(prior) === "-") {
-				event.preventDefault();
-
-				textbox.value =
-					textbox.value.slice(0, prior) +
-					"—" +
-					textbox.value.slice(prior + 1, textbox.value.length);
-
-				textbox.setSelectionRange(prior + 1, prior + 1);
-			}
-		}
 	};
 
 	/**
@@ -295,7 +297,7 @@ const initialize = () => {
 	 */
 	textbox.onkeyup = function () {
 		calcStats(textbox);
-		populatePreview(textbox, previewbox);
+		populatePreview(textbox, previewbox, preview_settings);
 
 		window.clearTimeout(timeoutID);
 		timeoutID = window.setTimeout(() => {
@@ -306,17 +308,17 @@ const initialize = () => {
 	/**
 	 * Save textarea contents as a text file
 	 */
-	document.querySelector("#save a").onclick = function () {
-		this.download = (filenameBox.value || DEFAULT_FILE_NAME).replace(
-			/^([^.]*)$/,
-			"$1.txt"
-		);
-		this.href = URL.createObjectURL(
-			new Blob([document.querySelector("#textbox").value], {
-				type: "text/plain",
-			})
-		);
-	};
+	// document.querySelector("#save a").onclick = function () {
+	// 	this.download = (filenameBox.value || DEFAULT_FILE_NAME).replace(
+	// 		/^([^.]*)$/,
+	// 		"$1.txt"
+	// 	);
+	// 	this.href = URL.createObjectURL(
+	// 		new Blob([document.querySelector("#textbox").value], {
+	// 			type: "text/plain",
+	// 		})
+	// 	);
+	// };
 
 	/** Load contents from a text file */
 	document.querySelector("#open a").onclick = function () {
@@ -338,14 +340,25 @@ const initialize = () => {
 		reader.readAsText(this.files[0]);
 	};
 
+	// makeModal("settings");
+	makeModal("about");
+	makeModal("help");
+
 	/** Toggle spell-checking */
 	document.querySelector("#spellcheck").onchange = function () {
 		textbox.spellcheck = this.checked;
 	};
 
-	// makeModal("settings");
-	makeModal("about");
-	makeModal("help");
+	/** Toggle em conversion */
+	document.querySelector("#emdash").onchange = function () {
+		preview_settings.em_dash = this.checked;
+		populatePreview(textbox, previewbox, preview_settings);
+	};
+
+	document.querySelector("#ooc").onchange = function () {
+		preview_settings.ooc = this.checked;
+		populatePreview(textbox, previewbox, preview_settings);
+	};
 
 	window.onbeforeunload = function () {
 		storeLocally(STORAGE_NAME, textbox.value);
