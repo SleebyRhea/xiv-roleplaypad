@@ -306,7 +306,9 @@ const initialize = () => {
 			"$1.txt"
 		);
 		this.href = URL.createObjectURL(
-			new Blob([document.querySelector("#textbox").value], { type: "text/plain" })
+			new Blob([document.querySelector("#textbox").value], {
+				type: "text/plain",
+			})
 		);
 	};
 
