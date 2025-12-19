@@ -12,6 +12,78 @@ const DEBUGGING = false;
 const CHAR_COUNT_OFFSET = 8;
 
 /**
+ * Returns false and sends an error message to the console
+ * @param {String} message
+ * @returns
+ */
+const badInput = (message) => {
+  console.error(msg);
+  return false;
+};
+
+/**
+ * `Chat2Connection` objects handle interfacing with the webinterface of the [chat2](https://github.com/Infiziert90/ChatTwo)
+ * dalamud plugin
+ */
+class Chat2Connection {
+  constructor(url) {
+    this.status = false;
+    this.auth = false;
+    this.__xhr = new XMLHttpRequest(url);
+  }
+
+  /**
+   * Attempt to authenticate
+   * @param {String} auth
+   * @returns {Boolean}
+   */
+  authenticate(auth) {
+    if (!/^[0-9]{6}$/.test(auth))
+      return badInput(`${this.className}: auth code must be 6 digit integer`);
+
+    this.__xhr.open("POST", "/auth", false, null, auth);
+    this.__xhr.setRequestHeader(
+      "Content-Type",
+      "application/x-www-form-urlencoded",
+    );
+    this.__xhr.send(`authcode=${auth}`);
+
+    if (this.__xhr.status !== 200) {
+      console.error(`${url}: Bad auth: ${this.__xhr.statusText}`);
+      return false;
+    }
+
+    return (this.auth = true);
+  }
+
+  /**
+   * Gate a function behind authentication with Chat2
+   * @param {(...any) => any} fn
+   * @returns {Boolean}
+   */
+  needAuth(fn) {
+    if (this.auth) {
+      return fn();
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Send a message to the configured chat2 interface
+   * @param {String} input
+   * @returns {Boolean}
+   */
+  sendMessage(input) {
+    return this.needAuth(() => {
+      this.__xhr.open("PUSH", "/send", false);
+      this.__xhr.setRequestHeader("Content-Type", "application/json");
+      this.__xhr.send(JSON.stringify({ message: input }));
+    });
+  }
+}
+
+/**
  * Store an object in local storage
  * @param {String} name
  * @param {any} what
