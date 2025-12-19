@@ -238,15 +238,6 @@ const formatLines = (lines, settings, prefix) => {
 };
 
 /**
- * Update a statusbar column with metadata
- * @param {String} item
- * @param {Number} value
- */
-const updateCount = (item, value) => {
-	document.querySelector("#" + item + "-count").textContent = value;
-};
-
-/**
  * With a name, find an element on the DOM and assign it an onclick
  * @param {String} name
  * @param {(HTMLDialogElement)=>void} onclick
