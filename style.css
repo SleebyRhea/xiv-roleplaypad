@@ -66,6 +66,10 @@ body {
 		& li.copied {
 			color: green;
 		}
+
+		& li.sent {
+			color: blue;
+		}
 	}
 
 	& #inputarea {
@@ -128,6 +132,14 @@ nav {
 }
 
 #about {
+	/* height: 50%;
+  width: 50%; */
+	& form {
+		text-align: right;
+	}
+}
+
+#settings {
 	/* height: 50%;
   width: 50%; */
 	& form {
