@@ -411,7 +411,6 @@ const initialize = () => {
    * Calculate stats when a key is depressed, reset the save timeout
    */
   textbox.onkeyup = function () {
-    // calcStats(textbox);
     populatePreview(textbox, previewbox, preview_settings, getChatPrefix());
 
     window.clearTimeout(timeoutID);
