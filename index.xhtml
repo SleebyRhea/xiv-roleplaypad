@@ -11,13 +11,30 @@
 <body>
 	<div id="editor">
 		<ul id="preview"></ul>
-		<textarea id="textbox" autofocus="autofocus" placeholder="type here"></textarea>
+    <div id="inputarea">
+      <textarea id="textbox" autofocus="autofocus" placeholder="type here"></textarea>
+    </div>
   </div>
 	<nav>
-    <span id="stats">
-      <span id="char-count">0</span> chars │
-      <span id="word-count">0</span> words │
-      <span id="line-count">0</span> lines
+    <span id="chatselector">
+      <input type="radio" name="chatype" id="saychat" value="/s" />
+      <label for="say">/s</label>
+
+      <input type="radio" name="chatype" id="partychat" value="/p" />
+      <label for="party">/p</label>
+
+      <input type="radio" name="chatype" id="yellchat" value="/y" />
+      <label for="yell">/y</label>
+
+      <input type="radio" name="chatype" id="shoutchat" value="/sh" />
+      <label for="shout">/sh</label>
+
+      <input type="radio" name="chatype" id="emotechat" value="/em" />
+      <label for="emote">/em</label>
+
+      <input type="radio" name="chatype" id="customchat" value="" />
+      <label for="custom">custom:</label>
+      <input id="customchat-input" placeholder="/tell ..." value="/tell ..." />
     </span>
     <span id="controls">
       <span id="open">
@@ -26,11 +43,15 @@
       </span>
       <input type="checkbox" id="ooc" />
       <label for="ooc">((OOC))</label>
+
       <input type="checkbox" id="spellcheck" />
       <label for="spellcheck">Spellcheck</label>
+      
       <input type="checkbox" id="emdash" />
       <label for="emdash">Convert -- to —</label>
+      
       │
+      
       <a class="navbar-icon" href="#" title="Shortcuts" id="help-icon">Ⓗ</a>
       <a class="navbar-icon" href="#" title="About Browserpad" id="about-icon">ⓘ</a>
       <!-- <a class="navbar-icon" href="#" title="Settings" id="settings-icon">≡</a> -->
@@ -48,7 +69,6 @@
     <p>Simply type in the textbox box at the bottom, and go.</p>
     <p>Clicking the generated text will copy it, highlighting it green. Click again - or simply type - to unhighlight.</p>
     <h3>Keyboard Shortcuts</h3>
-    <p><code>Ctrl-s</code>: Save to a file</p>
     <p><code>Ctrl-o</code>: Open a file</p>
     <p><code>Ctrl-/</code>: Open this help dialog</p>
     <form method="dialog"><button>close</button></form>

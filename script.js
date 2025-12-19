@@ -24,14 +24,14 @@ const storeLocally = (name, what) => {
  * Calculate and display character, words and line counts
  * @param {Element} box
  */
-const calcStats = (box) => {
-	updateCount("char", box.value.length);
-	updateCount(
-		"word",
-		box.value === "" ? 0 : box.value.replace(/\s+/g, " ").split(" ").length
-	);
-	updateCount("line", box.value === "" ? 0 : box.value.split(/\n/).length);
-};
+// const calcStats = (box) => {
+// 	updateCount("char", box.value.length);
+// 	updateCount(
+// 		"word",
+// 		box.value === "" ? 0 : box.value.replace(/\s+/g, " ").split(" ").length
+// 	);
+// 	updateCount("line", box.value === "" ? 0 : box.value.split(/\n/).length);
+// };
 
 var depth = 0;
 const dbgLogFn = (what, fn) => {
@@ -85,10 +85,12 @@ class PreviewSettings {
  * @param {HTMLTextAreaElement} box
  * @param {HTMLOListElement} preview
  * @param {PreviewSettings} settings
+ * @param {String} prefix
  */
-const populatePreview = (box, preview, settings) => {
+const populatePreview = (box, preview, settings, prefix) => {
 	var list_objects = [];
-	formatLines(box.value, settings).forEach((line, i, self) => {
+
+	formatLines(box.value, settings, prefix).forEach((line, i, self) => {
 		var li = document.createElement("li");
 		var content = document.createElement("span");
 		var metadata = document.createElement("span");
@@ -124,20 +126,30 @@ const populatePreview = (box, preview, settings) => {
  * Split a string into lines each within the CHARACTER_LIMIT
  * @param {String} line
  * @param {PreviewSettings} settings
+ * @param {String} prefix
  * @param {Boolean} singular
  */
-const processLine = (line, settings, singular) => {
+const processLine = (line, settings, prefix, singular) => {
+	var isSplit = false;
+
 	line = line.replace(/\s+/g, " ");
 
-	var totalOffset = 0;
+	if (/^\/[a-zA-Z0-9]+/.test(line)) {
+		/** @type {RegExpExecArray} */
+		prefix = /^(\/[a-zA-Z0-9]+)/.exec(line)[0];
+		line = line.slice(prefix.length + 1, line.length);
+	}
+
+	var totalOffset = prefix.length + 1;
+
 	var finishLine = (input) => {
-		return input;
+		return `${prefix} ${input}`;
 	};
 
 	if (settings.ooc) {
-		totalOffset = 4;
+		totalOffset += 4;
 		finishLine = (input) => {
-			return "((" + input + "))";
+			return `${prefix} ((${input}))`;
 		};
 	}
 
@@ -166,12 +178,17 @@ const processLine = (line, settings, singular) => {
 			count = 0;
 			results[on] = finishLine(results[on]);
 			results[++on] = "";
+			if (!isSplit) {
+				isSplit = true;
+				totalOffset += 2;
+				prefix = `${prefix} | `;
+			}
 		}
 
 		results[on] += word + " ";
 	});
 
-	results[on] = finishLine(results[on].replace(/[ \t]$/));
+	results[on] = finishLine(results[on].replace(/[ \t]$/, ""));
 
 	dbgLog("Final result:", results);
 
@@ -182,8 +199,9 @@ const processLine = (line, settings, singular) => {
  *
  * @param {HTMLTextAreaElement} box
  * @param {PreviewSettings} settings
+ * @param {String} prefix
  */
-const formatLines = (lines, settings) => {
+const formatLines = (lines, settings, prefix) => {
 	if (settings.em_dash) {
 		lines = lines.replace(/--/g, "—");
 	}
@@ -205,7 +223,7 @@ const formatLines = (lines, settings) => {
 			return;
 		}
 
-		result.push(...processLine(line, settings, count == 1));
+		result.push(...processLine(line, settings, prefix, count == 1));
 	});
 
 	count = result.length;
@@ -254,6 +272,18 @@ const makeModal = (name, onclick) => {
 	};
 };
 
+const getChatPrefix = () => {
+	var prefix = document.querySelector('input[name="chatype"]:checked').value;
+	if (prefix === "") {
+		prefix = document.querySelector("input#customchat-input").value;
+		if (prefix.replace(/^\s*$/, "") === "") {
+			return "/???";
+		}
+	}
+
+	return prefix;
+};
+
 const initialize = () => {
 	var timeoutID = null;
 	const preview_settings = new PreviewSettings();
@@ -273,8 +303,8 @@ const initialize = () => {
 
 	/** Place caret at end of content */
 	textbox.setSelectionRange(textbox.value.length, textbox.value.length);
-	populatePreview(textbox, previewbox, preview_settings);
-	calcStats(textbox);
+	populatePreview(textbox, previewbox, preview_settings, getChatPrefix());
+	// calcStats(textbox);
 
 	/**
 	 * Keyboard shortcuts
@@ -283,10 +313,6 @@ const initialize = () => {
 	document.onkeydown = function (event) {
 		if (event.ctrlKey) {
 			switch (event.key) {
-				// case "s":
-				// 	document.querySelector("#save a").click();
-				// 	event.preventDefault();
-				// 	break;
 				case "o":
 					document.querySelector("#open input").click();
 					event.preventDefault();
@@ -319,8 +345,8 @@ const initialize = () => {
 	 * Calculate stats when a key is depressed, reset the save timeout
 	 */
 	textbox.onkeyup = function () {
-		calcStats(textbox);
-		populatePreview(textbox, previewbox, preview_settings);
+		// calcStats(textbox);
+		populatePreview(textbox, previewbox, preview_settings, getChatPrefix());
 
 		window.clearTimeout(timeoutID);
 		timeoutID = window.setTimeout(() => {
@@ -352,6 +378,22 @@ const initialize = () => {
 	makeModal("about");
 	makeModal("help");
 
+	document.querySelectorAll("input[name='chatype']").forEach((node) => {
+		node.onchange = function () {
+			populatePreview(textbox, previewbox, preview_settings, getChatPrefix());
+		};
+	});
+
+	document.querySelector("#customchat-input").oninput = () => {
+		var current_chat = document.querySelector(
+			"input[name='chatype']:checked"
+		).id;
+
+		if (current_chat === "customchat") {
+			populatePreview(textbox, previewbox, preview_settings, getChatPrefix());
+		}
+	};
+
 	/** Toggle spell-checking */
 	document.querySelector("#spellcheck").onchange = function () {
 		textbox.spellcheck = this.checked;
@@ -360,12 +402,12 @@ const initialize = () => {
 	/** Toggle em conversion */
 	document.querySelector("#emdash").onchange = function () {
 		preview_settings.em_dash = this.checked;
-		populatePreview(textbox, previewbox, preview_settings);
+		populatePreview(textbox, previewbox, preview_settings, getChatPrefix());
 	};
 
 	document.querySelector("#ooc").onchange = function () {
 		preview_settings.ooc = this.checked;
-		populatePreview(textbox, previewbox, preview_settings);
+		populatePreview(textbox, previewbox, preview_settings, getChatPrefix());
 	};
 
 	window.onbeforeunload = function () {
