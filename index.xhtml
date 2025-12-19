@@ -46,15 +46,15 @@
 
       <input type="checkbox" id="spellcheck" />
       <label for="spellcheck">Spellcheck</label>
-      
+
       <input type="checkbox" id="emdash" />
       <label for="emdash">Convert -- to —</label>
-      
+
       │
-      
+
       <a class="navbar-icon" href="#" title="Shortcuts" id="help-icon">Ⓗ</a>
       <a class="navbar-icon" href="#" title="About Browserpad" id="about-icon">ⓘ</a>
-      <!-- <a class="navbar-icon" href="#" title="Settings" id="settings-icon">≡</a> -->
+      <a class="navbar-icon" href="#" title="Settings" id="settings-icon">≡</a>
     </span>
   </nav>
   <dialog id="about">
@@ -73,9 +73,17 @@
     <p><code>Ctrl-/</code>: Open this help dialog</p>
     <form method="dialog"><button>close</button></form>
   </dialog>
-  <!-- <dialog id="settings">
+  <dialog id="settings">
+    <h2>Connector Configuration</h2>
+
+    <span>
+      Chat2 Web Interface URL
+      <input id="chat2web" placeholder="http://127.0.0.1:9000" />
+      <input id="chat2auth" placeholder="...your auth code" />
+    </span>
+
     <form method="dialog"><button>close</button></form>
-  </dialog> -->
+  </dialog>
   <script src="./script.js"></script>
 </body>
 </html>
