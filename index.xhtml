@@ -1,89 +1,129 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>Browserpad - A notepad in the browser</title>
-  <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,R0lGODlhEAAQAKEAAAAAAICAgP///wAAACH/
+  <head>
+    <meta charset="utf-8" />
+    <title>XIV Roleplay Pad</title>
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="data:image/x-icon;base64,R0lGODlhEAAQAKEAAAAAAICAgP///wAAACH/
     C05FVFNDQVBFMi4wAwEAAAAh/hFDcmVhdGVkIHdpdGggR0lNUAAh+QQBZAADACwAAAAAEAAQAAACJIyPacLtvp5kEUwYmL00i81VXK
-    eNgjiioQdeqsuakXl6tIIjBQAh+QQBZAADACwAAAAAEAAQAAACIIyPacLtvp5kcb5qG85iZ2+BkyiRV8BBaEqtrKkqslEAADs=" />
-  <link rel="stylesheet" type="text/css" href="./style.css" />
-  <!-- <script type="text/javascript" src="https://livejs.com/live.js#html,css,js"></script> -->
-</head>
-<body>
-	<div id="editor">
-		<ul id="preview"></ul>
-    <div id="inputarea">
-      <textarea id="textbox" autofocus="autofocus" placeholder="type here"></textarea>
+    eNgjiioQdeqsuakXl6tIIjBQAh+QQBZAADACwAAAAAEAAQAAACIIyPacLtvp5kcb5qG85iZ2+BkyiRV8BBaEqtrKkqslEAADs="
+    />
+    <link rel="stylesheet" type="text/css" href="./style.css" />
+    <!-- <script type="text/javascript" src="https://livejs.com/live.js#html,css,js"></script> -->
+  </head>
+  <body>
+    <div id="editor">
+      <ul id="preview"></ul>
+      <div id="inputarea">
+        <textarea
+          id="textbox"
+          autofocus="autofocus"
+          placeholder="type here"
+        ></textarea>
+      </div>
     </div>
-  </div>
-	<nav>
-    <span id="chatselector">
-      <input type="radio" name="chatype" id="saychat" value="/s" checked="checked"/>
-      <label for="say">/s</label>
+    <nav>
+      <span id="chatselector">
+        <input
+          type="radio"
+          name="chatype"
+          id="saychat"
+          value="/s"
+          checked="checked"
+        />
+        <label for="say">/s</label>
 
-      <input type="radio" name="chatype" id="partychat" value="/p" />
-      <label for="party">/p</label>
+        <input type="radio" name="chatype" id="partychat" value="/p" />
+        <label for="party">/p</label>
 
-      <input type="radio" name="chatype" id="yellchat" value="/y" />
-      <label for="yell">/y</label>
+        <input type="radio" name="chatype" id="yellchat" value="/y" />
+        <label for="yell">/y</label>
 
-      <input type="radio" name="chatype" id="shoutchat" value="/sh" />
-      <label for="shout">/sh</label>
+        <input type="radio" name="chatype" id="shoutchat" value="/sh" />
+        <label for="shout">/sh</label>
 
-      <input type="radio" name="chatype" id="emotechat" value="/em" />
-      <label for="emote">/em</label>
+        <input type="radio" name="chatype" id="emotechat" value="/em" />
+        <label for="emote">/em</label>
 
-      <input type="radio" name="chatype" id="customchat" value="" />
-      <label for="custom">custom:</label>
-      <input id="customchat-input" placeholder="/tell ..." value="/tell ..." />
-    </span>
-    <span id="controls">
-      <span id="open">
-        <input type="file" value="open" />
-        <a href="#">open</a>
+        <input type="radio" name="chatype" id="customchat" value="" />
+        <label for="custom">custom:</label>
+        <input
+          id="customchat-input"
+          placeholder="/tell first last@server"
+        />
       </span>
-      <input type="checkbox" id="ooc" />
-      <label for="ooc">((OOC))</label>
+      <span id="controls">
+        <span id="open" hidden="">
+          <input type="file" value="open" />
+          <a href="#">open</a>
+        </span>
 
-      <input type="checkbox" id="spellcheck" />
-      <label for="spellcheck">Spellcheck</label>
+        <span id="save" hidden="">
+          <input id="filename" placeholder="browserpad.txt" />
+          <a href="#">save</a>
+        </span>
 
-      <input type="checkbox" id="emdash" />
-      <label for="emdash">Convert -- to —</label>
+        <input type="checkbox" id="ooc" />
+        <label for="ooc">((OOC))</label> |
 
-      │
+        <input type="checkbox" id="spellcheck" />
+        <label for="spellcheck">Spellcheck</label> |
 
-      <a class="navbar-icon" href="#" title="Shortcuts" id="help-icon">Ⓗ</a>
-      <a class="navbar-icon" href="#" title="About Browserpad" id="about-icon">ⓘ</a>
-      <a class="navbar-icon" href="#" title="Settings" id="settings-icon">≡</a>
-    </span>
-  </nav>
-  <dialog id="about">
-    <h2>XIV Roleplaypad</h2>
-    <p>A reimplementation of the basic features found in <a href="https://github.com/MythicPalette/Wordsmith-DalamudPlugin">Wordsmith</a></p>
-    <p></p>
-    <p>The source code is <a href="https://github.com/Browserpad/browserpad">available on GitHub</a>.</p>
-    <form method="dialog"><button>close</button></form>
-  </dialog>
-  <dialog id="help">
-    <h2>Help</h2>
-    <p>Simply type in the textbox box at the bottom, and go.</p>
-    <p>Clicking the generated text will copy it, highlighting it green. Click again - or simply type - to unhighlight.</p>
-    <h3>Keyboard Shortcuts</h3>
-    <p><code>Ctrl-o</code>: Open a file</p>
-    <p><code>Ctrl-/</code>: Open this help dialog</p>
-    <form method="dialog"><button>close</button></form>
-  </dialog>
-  <dialog id="settings">
-    <h2>Connector Configuration</h2>
+        <input type="checkbox" id="emdash" />
+        <label for="emdash">Convert -- to —</label> |
 
-    <span>
-      Chat2 Web Interface URL
-      <input id="chat2web" placeholder="http://127.0.0.1:9000" />
-      <input id="chat2auth" placeholder="...your auth code" />
-    </span>
+        <span id="sendcontainer" hidden="">
+          <input type="checkbox" id="sendtogame" />
+          <label for="send">Send to XIV</label> |
+        </span>
 
-    <form method="dialog"><button>close</button></form>
-  </dialog>
-  <script src="./script.js"></script>
-</body>
+        <a class="navbar-icon" href="#" title="Shortcuts" id="help-icon">Ⓗ</a>
+        <a class="navbar-icon" href="#" title="About" id="about-icon">ⓘ</a>
+        <a class="navbar-icon" href="#" title="Connect" id="connect-icon" hidden="">🖧</a>
+      </span>
+    </nav>
+    <dialog id="about">
+      <h2>XIV Roleplaypad</h2>
+      <p>
+        A reimplementation of the basic features found in
+        <a href="https://github.com/MythicPalette/Wordsmith-DalamudPlugin"
+          >Wordsmith</a
+        >
+      </p>
+      <p></p>
+      <p>
+        The source code is
+        <a href="https://github.com/Browserpad/browserpad"
+          >available on GitHub</a
+        >.
+      </p>
+      <form method="dialog"><button>close</button></form>
+    </dialog>
+    <dialog id="help">
+      <h2>Help</h2>
+      <p>Simply type in the textbox box at the bottom, and go.</p>
+      <p>
+        Clicking the generated text will copy it, highlighting it green. Click
+        again - or simply type - to unhighlight.
+      </p>
+      <h3>Keyboard Shortcuts</h3>
+      <p><code>Ctrl-o</code>: Open a file</p>
+      <p><code>Ctrl-/</code>: Open this help dialog</p>
+      <form method="dialog"><button>close</button></form>
+    </dialog>
+    <dialog id="connect">
+      <h2>Connector Configuration</h2>
+      <p>Enables this pad to send messages directly to FFXIV</p>
+      <span>
+        Chat2 Web URL
+        <input id="chat2url" placeholder="http://127.0.0.1:9000" />
+        <input id="chat2auth" placeholder="...your auth code" />
+        <input id="chat2connect" type="button" value="connect" />
+      </span>
+
+      <form method="dialog"><button>close</button></form>
+    </dialog>
+    <script src="./script.js"></script>
+  </body>
 </html>

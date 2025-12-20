@@ -1,5 +1,4 @@
-const STORAGE_NAME = "roleplaypad";
-const DEFAULT_FILE_NAME = "roleplaypad.txt";
+const STORAGE_NAME = "padContent";
 const CHARACTER_LIMIT = 500;
 const DEBUGGING = false;
 
@@ -22,22 +21,156 @@ const badInput = (message) => {
 };
 
 /**
- * `Chat2Connection` objects handle interfacing with the webinterface of the [chat2](https://github.com/Infiziert90/ChatTwo)
- * dalamud plugin
+ * Raise an exception if any objects are null or undefined
+ * @param {Object} object
+ */
+const all = (object) => {
+  for (let key in object) {
+    if (object[key] === null || object[key] === undefined) {
+      return [false, key];
+    }
+  }
+
+  return [true];
+};
+
+class Settings {
+  /**
+   * @param {String} name
+   * @param {Object} defaults
+   */
+  constructor(name, defaults) {
+    this._load = () => {
+      let stored = JSON.parse(localStorage.getItem(name));
+      this._data = { ...defaults, ...stored };
+    };
+
+    this._save = () => {
+      localStorage.setItem(name, JSON.stringify(this._data));
+    };
+
+    this._onSet = {};
+    this.load();
+  }
+
+  save() {
+    return this._save();
+  }
+
+  load() {
+    return this._load();
+  }
+
+  /**
+   * Ensure that Settings->save() is run, catching and printing an error if it fails
+   * @param {String} name
+   * @param {() => void} fn
+   * @returns
+   */
+  setEvent(name, fn) {
+    try {
+      fn();
+      this.save();
+
+      if (this._onSet[name] && Array.isArray(this._onSet[name])) {
+        this._onSet[name].forEach((fn) => {
+          return fn(this._data[name]);
+        });
+      }
+    } catch {
+      console.error(`Failed to save ${name}`);
+    }
+  }
+
+  addSetHandler(name, fn) {
+    if (!this._onSet[name]) {
+      this._onSet[name] = new Array();
+    }
+
+    this._onSet[name].push(fn);
+  }
+
+  set doSpellcheck(value) {
+    return this.setEvent("doSpellcheck", () => {
+      this._data.doSpellcheck = value;
+    });
+  }
+
+  get doSpellcheck() {
+    return this._data.doSpellcheck;
+  }
+
+  set doEmConvert(value) {
+    return this.setEvent("doEmConvert", () => {
+      this._data.doEmConvert = value;
+    });
+  }
+
+  get doEmConvert() {
+    return this._data.doEmConvert;
+  }
+
+  set doSendToGame(value) {
+    return this.setEvent("doSendToGame", () => {
+      this._data.doSendToGame = value;
+    });
+  }
+
+  get doSendToGame() {
+    return this._data.doSendToGame;
+  }
+
+  set isOutOfCharacter(value) {
+    return this.setEvent("isOutOfCharacter", () => {
+      this._data.isOutOfCharacter = value;
+    });
+  }
+
+  get isOutOfCharacter() {
+    return this._data.isOutOfCharacter;
+  }
+}
+
+/**
+ * `Chat2Connection` objects handle interfacing with the webinterface of the
+ * [Chat2](https://github.com/Infiziert90/ChatTwo) dalamud plugin
  */
 class Chat2Connection {
+  static {
+    function isValidUrl(url) {
+      return false;
+    }
+  }
+
+  /**
+   * @param {String} url
+   */
   constructor(url) {
+    if (!Chat2Connection.isValidUrl(url))
+      throw "Invalid url for chat2 interface";
+
     this.status = false;
     this.auth = false;
     this.__xhr = new XMLHttpRequest(url);
   }
 
   /**
-   * Attempt to authenticate
-   * @param {String} auth
+   * Gate a function behind authentication with Chat2
+   * @param {(...any) => any} fn
    * @returns {Boolean}
    */
-  authenticate(auth) {
+  needAuth(fn) {
+    if (this.auth) return fn();
+    return false;
+  }
+
+  /**
+   * Attempt to authenticate
+   * @param {String} auth
+   * @param {() => void} onComplete
+   * @returns {Boolean}
+   */
+  authenticate(auth, onComplete) {
     if (!/^[0-9]{6}$/.test(auth))
       return badInput(`${this.className}: auth code must be 6 digit integer`);
 
@@ -46,8 +179,8 @@ class Chat2Connection {
       "Content-Type",
       "application/x-www-form-urlencoded",
     );
-    this.__xhr.send(`authcode=${auth}`);
 
+    this.__xhr.send(`authcode=${auth}`);
     if (this.__xhr.status !== 200) {
       console.error(`${url}: Bad auth: ${this.__xhr.statusText}`);
       return false;
@@ -57,24 +190,12 @@ class Chat2Connection {
   }
 
   /**
-   * Gate a function behind authentication with Chat2
-   * @param {(...any) => any} fn
-   * @returns {Boolean}
-   */
-  needAuth(fn) {
-    if (this.auth) {
-      return fn();
-    } else {
-      return false;
-    }
-  }
-
-  /**
    * Send a message to the configured chat2 interface
    * @param {String} input
+   * @param {() => void} onComplete
    * @returns {Boolean}
    */
-  sendMessage(input) {
+  sendMessage(input, onComplete) {
     return this.needAuth(() => {
       this.__xhr.open("PUSH", "/send", false);
       this.__xhr.setRequestHeader("Content-Type", "application/json");
@@ -85,31 +206,16 @@ class Chat2Connection {
 
 /**
  * Store an object in local storage
- * @param {String} name
+ * @param {String} name[]
  * @param {any} what
  */
 const storeLocally = (name, what) => {
   localStorage.setItem(name, what);
 };
 
-/**
- * Calculate and display character, words and line counts
- * @param {Element} box
- */
-// const calcStats = (box) => {
-// 	updateCount("char", box.value.length);
-// 	updateCount(
-// 		"word",
-// 		box.value === "" ? 0 : box.value.replace(/\s+/g, " ").split(" ").length
-// 	);
-// 	updateCount("line", box.value === "" ? 0 : box.value.split(/\n/).length);
-// };
-
-var depth = 0;
 const dbgLogFn = (what, fn) => {
   if (DEBUGGING) {
     return (...arg) => {
-      console.log("DEBUG:", what);
       return fn(...arg);
     };
   }
@@ -136,30 +242,21 @@ const isOverLimit = (size, offset = 0) => {
   dbgLog(
     `Math.floor((${
       size - 1
-    } / (${CHARACTER_LIMIT} - ${CHAR_COUNT_OFFSET} - ${offset}))) = ${r}`,
+    } / (${CHARACTER_LIMIT} - ${CHAR_COUNT_OFFSET} - ${offset}))) = ${r} >= 1`,
   );
+
   return 1 <= r;
 };
-
-class PreviewSettings {
-  /**
-   *
-   * @param {Boolean} em_dash Rewrite -- into —
-   */
-  constructor(em_dash = true, ooc = false) {
-    this.em_dash = em_dash;
-    this.ooc = false;
-  }
-}
 
 /**
  *
  * @param {HTMLTextAreaElement} box
  * @param {HTMLOListElement} preview
- * @param {PreviewSettings} settings
+ * @param {Settings} settings
  * @param {String} prefix
+ * @param {Chat2Connection?} chat2
  */
-const populatePreview = (box, preview, settings, prefix) => {
+const populatePreview = (box, preview, settings, prefix, chat2) => {
   var list_objects = [];
 
   formatLines(box.value, settings, prefix).forEach((line, i, self) => {
@@ -177,13 +274,22 @@ const populatePreview = (box, preview, settings, prefix) => {
     }
 
     li.onclick = function () {
-      if (li.classList.contains("copied")) {
+      var messageClass = settings.doSendToGame ? "sent" : "copied";
+
+      if (li.classList.contains("copied" || li.classList.contains("copied"))) {
         li.classList.remove("copied");
+        li.classList.remove("sent");
         return;
       }
 
-      navigator.clipboard.writeText(content.textContent);
-      li.classList.add("copied");
+      if (!settings.doSendToGame || !chat2) {
+        navigator.clipboard.writeText(content.textContent);
+      } else {
+        li.classList.add("sending");
+        chat2?.sendMessage(content.textContent, () => {
+          li.classList.add(messageClass);
+        });
+      }
     };
 
     li.appendChild(content);
@@ -197,7 +303,7 @@ const populatePreview = (box, preview, settings, prefix) => {
 /**
  * Split a string into lines each within the CHARACTER_LIMIT
  * @param {String} line
- * @param {PreviewSettings} settings
+ * @param {Settings} settings
  * @param {String} prefix
  * @param {Boolean} singular
  */
@@ -218,10 +324,10 @@ const processLine = (line, settings, prefix, singular) => {
     return `${prefix} ${input}`;
   };
 
-  if (settings.ooc) {
+  if (settings.isOutOfCharacter) {
     totalOffset += 4;
     finishLine = (input) => {
-      return `${prefix} ((${input}))`;
+      return `${prefix} ((${input.replace(/\s*$/, "")}))`;
     };
   }
 
@@ -241,6 +347,7 @@ const processLine = (line, settings, prefix, singular) => {
   var results = [""];
   var count = 0;
   var on = 0;
+
   words.forEach((word) => {
     count += word.length + 1;
     dbgLog(`On word '${word}' [${count}]`);
@@ -270,7 +377,7 @@ const processLine = (line, settings, prefix, singular) => {
 /**
  *
  * @param {HTMLTextAreaElement} box
- * @param {PreviewSettings} settings
+ * @param {Settings} settings
  * @param {String} prefix
  */
 const formatLines = (lines, settings, prefix) => {
@@ -284,17 +391,12 @@ const formatLines = (lines, settings, prefix) => {
   var result = [];
 
   all_lines.forEach((line) => {
-    if (/^\s*$/.test(line)) {
-      return;
-    }
+    if (/^\s*$/.test(line)) return;
     count++;
   });
 
   all_lines.forEach((line) => {
-    if (/^\s*$/.test(line)) {
-      return;
-    }
-
+    if (/^\s*$/.test(line)) return;
     result.push(...processLine(line, settings, prefix, count == 1));
   });
 
@@ -347,30 +449,118 @@ const getChatPrefix = () => {
   return prefix;
 };
 
+const padSettings = new Settings("padSettings", {
+  isOutOfCharacter: false,
+  doSpellcheck: true,
+  doEmConvert: true,
+  doSendToGame: false,
+});
+
 const initialize = () => {
   var timeoutID = null;
-  const preview_settings = new PreviewSettings();
 
-  /** @type {HTMLTextAreaElement} */
-  const textbox = document.querySelector("#textbox");
+  const staticElements = {
+    /** @type {HTMLTextAreaElement} */
+    textBox: document.querySelector("#textbox"),
+
+    /** @type {HTMLUListElement} */
+    previewBox: document.querySelector("#preview"),
+
+    /** @type {HTMLInputElement} */
+    spellcheckCheckbox: document.querySelector("#spellcheck"),
+
+    /** @type {HTMLInputElement} */
+    emDashCheckbox: document.querySelector("#emdash"),
+
+    /** @type {HTMLInputElement} */
+    oocCheckbox: document.querySelector("#ooc"),
+
+    /** @type {NodeListOf<HTMLInputElement>} */
+    chatTypeRadio: document.querySelectorAll("input[name='chatype']"),
+
+    /** @type {HTMLInputElement} */
+    customChatInput: document.querySelector("#customchat-input"),
+
+    /** @type {HTMLInputElement} */
+    sendGameCheckbox: document.querySelector("#sendtogame"),
+
+    /** @type {HTMLSpanElement} */
+    sendGameContainer: document.querySelector("#sendcontainer"),
+
+    /** @type {HTMLLinkElement} */
+    saveLink: document.querySelector("#save a"),
+
+    /** @type {HTMLLinkElement} */
+    openLink: document.querySelector("#open a"),
+
+    /** @type {HTMLLinkElement} */
+    openInput: document.querySelector("#open input"),
+
+    /** @type {HTMLLinkElement} */
+    chatTwoConnectButton: document.querySelector("#chat2connect"),
+  };
+
+  let allTruthy = all(staticElements);
+  if (!allTruthy[0]) {
+    throw `Cannot load, missing required elements: ${allTruthy[1]}`;
+  }
 
   /** @type {HTMLPreElement} */
   const previewbox = document.querySelector("#preview");
 
-  /** @type {HTMLInputElement} */
-  const filenameBox = document.querySelector("#filename");
-
   /** @type {Chat2Connection} */
   var chat2connection;
 
-  textbox.value = localStorage.getItem(STORAGE_NAME) || "";
-  textbox.spellcheck = document.querySelector("#spellcheck")?.checked ?? true;
-  preview_settings.ooc = document.querySelector("#ooc")?.checked ?? false;
+  staticElements.textBox.value = localStorage.getItem(STORAGE_NAME) || "";
+  staticElements.textBox.spellcheck = padSettings.doSpellcheck;
+  staticElements.spellcheckCheckbox.checked = padSettings.doSpellcheck;
+  staticElements.emDashCheckbox.checked = padSettings.doEmConvert;
+  staticElements.oocCheckbox.checked = padSettings.isOutOfCharacter;
+  staticElements.sendGameCheckbox.checked = padSettings.doSendToGame;
 
-  /** Place caret at end of content */
-  textbox.setSelectionRange(textbox.value.length, textbox.value.length);
-  populatePreview(textbox, previewbox, preview_settings, getChatPrefix());
-  // calcStats(textbox);
+  padSettings.addSetHandler("doSpellcheck", (value) => {
+    staticElements.textBox.spellcheck = value;
+  });
+
+  makeModal("connect");
+  makeModal("about");
+  makeModal("help");
+
+  const doUpdate = () => {
+    return populatePreview(
+      staticElements.textBox,
+      previewbox,
+      padSettings,
+      getChatPrefix(),
+      chat2connection,
+    );
+  };
+
+  const connectChat2 = () => {
+    var url = document.querySelector("#chat2url").value;
+    var auth = document.querySelector("#chat2auth").value;
+
+    if (chat2connection) return;
+    if (!url || !auth) return;
+
+    try {
+      chat2connection = new Chat2Connection(url);
+    } catch {
+      return;
+    }
+
+    chat2connection.authenticate(auth, () => {
+      document.querySelector("#chat2connect").onclick = disconnectChat2;
+      document.querySelector("#sendcontainer")?.setAttribute("hidden", "");
+    });
+  };
+
+  const disconnectChat2 = () => {
+    chat2connection = null;
+    document.querySelector("#sendtogame").checked = false;
+    document.querySelector("#sendcontainer")?.removeAttribute("hidden");
+    document.querySelector("#chat2connect").onclick = connectChat2;
+  };
 
   /**
    * Keyboard shortcuts
@@ -379,8 +569,12 @@ const initialize = () => {
   document.onkeydown = function (event) {
     if (event.ctrlKey) {
       switch (event.key) {
+        case "s":
+          staticElements.saveLink.click();
+          event.preventDefault();
+          break;
         case "o":
-          document.querySelector("#open input").click();
+          staticElements.openInput.click();
           event.preventDefault();
           break;
         case "/":
@@ -396,7 +590,7 @@ const initialize = () => {
    * (must use onkeydown to prevent default behavior of moving focus)
    * @param {Event} event
    */
-  textbox.onkeydown = function (event) {
+  staticElements.textBox.onkeydown = function (event) {
     if (event.key === "Tab") {
       event.preventDefault();
       var text = this.value,
@@ -408,76 +602,87 @@ const initialize = () => {
   };
 
   /**
-   * Calculate stats when a key is depressed, reset the save timeout
+   * Update the preview and reset save timeout
    */
-  textbox.onkeyup = function () {
-    populatePreview(textbox, previewbox, preview_settings, getChatPrefix());
-
+  staticElements.textBox.onkeyup = function () {
+    doUpdate();
     window.clearTimeout(timeoutID);
     timeoutID = window.setTimeout(() => {
-      storeLocally(STORAGE_NAME, textbox.value);
+      storeLocally(STORAGE_NAME, staticElements.textBox.value);
     }, 1000);
   };
 
   /** Load contents from a text file */
-  document.querySelector("#open a").onclick = function () {
-    document.querySelector("#open input").click();
+  staticElements.openLink.onclick = function () {
+    staticElements.openInput.click();
   };
 
-  /**
-   * @this {FileReader}
-   */
-  document.querySelector("#open input").onchange = function () {
+  /** @this {FileReader} */
+  staticElements.openInput.onchange = function () {
     var reader = new FileReader();
     reader.file = this.files[0];
 
-    /** Custom property so the filenameBox can be set from within reader.onload() */
     reader.onload = function () {
-      filenameBox.value = this.file.name;
-      textbox.value = this.result;
+      staticElements.textBox.value = this.result;
     };
+
     reader.readAsText(this.files[0]);
   };
 
-  makeModal("settings");
-  makeModal("about");
-  makeModal("help");
+  staticElements.saveLink.onclick = function () {
+    this.download = `${STORAGE_NAME}.txt`;
+    this.href = URL.createObjectURL(
+      new Blob([staticElements.textBox.value], {
+        type: "text/plain",
+      }),
+    );
+  };
 
-  document.querySelectorAll("input[name='chatype']").forEach((node) => {
-    node.onchange = function () {
-      populatePreview(textbox, previewbox, preview_settings, getChatPrefix());
-    };
+  staticElements.chatTypeRadio.forEach((node) => {
+    node.onchange = doUpdate;
   });
 
-  document.querySelector("#customchat-input").oninput = () => {
+  staticElements.customChatInput.oninput = () => {
     var current_chat = document.querySelector(
       "input[name='chatype']:checked",
     ).id;
 
     if (current_chat === "customchat") {
-      populatePreview(textbox, previewbox, preview_settings, getChatPrefix());
+      doUpdate();
     }
   };
 
-  /** Toggle spell-checking */
-  document.querySelector("#spellcheck").onchange = function () {
-    textbox.spellcheck = this.checked;
+  staticElements.chatTwoConnectButton.onclick = connectChat2;
+
+  staticElements.spellcheckCheckbox.onchange = function () {
+    padSettings.doSpellcheck = this.checked;
   };
 
-  /** Toggle em conversion */
-  document.querySelector("#emdash").onchange = function () {
-    preview_settings.em_dash = this.checked;
-    populatePreview(textbox, previewbox, preview_settings, getChatPrefix());
+  staticElements.emDashCheckbox.onchange = function () {
+    padSettings.doEmConvert = this.checked;
+    doUpdate();
   };
 
-  document.querySelector("#ooc").onchange = function () {
-    preview_settings.ooc = this.checked;
-    populatePreview(textbox, previewbox, preview_settings, getChatPrefix());
+  staticElements.sendGameCheckbox.onchange = function () {
+    padSettings.doSendToGame = this.checked;
   };
+
+  staticElements.oocCheckbox.onchange = function () {
+    padSettings.isOutOfCharacter = this.checked;
+    doUpdate();
+  };
+
+  staticElements.textBox.setSelectionRange(
+    staticElements.textBox.value.length,
+    staticElements.textBox.value.length,
+  );
 
   window.onbeforeunload = function () {
-    storeLocally(STORAGE_NAME, textbox.value);
+    storeLocally(STORAGE_NAME, staticElements.textBox.value);
+    padSettings.save();
   };
+
+  doUpdate();
 };
 
 document.onreadystatechange = () => {

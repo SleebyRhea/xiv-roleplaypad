@@ -2,6 +2,7 @@ html {
   overflow: hidden;
   height: 100%;
 }
+
 body {
   background-color: #222;
   color: white;
@@ -67,8 +68,12 @@ body {
       color: green;
     }
 
+    & li.sending {
+      color: gray;
+    }
+
     & li.sent {
-      color: blue;
+      color: lightskyblue;
     }
   }
 
@@ -132,16 +137,12 @@ nav {
 }
 
 #about {
-  /* height: 50%;
-  width: 50%; */
   & form {
     text-align: right;
   }
 }
 
-#settings {
-  /* height: 50%;
-  width: 50%; */
+#connect {
   & form {
     text-align: right;
   }
