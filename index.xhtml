@@ -73,14 +73,8 @@
         <input type="checkbox" id="emdash" />
         <label for="emdash">Convert -- to —</label> |
 
-        <span id="sendcontainer" hidden="">
-          <input type="checkbox" id="sendtogame" />
-          <label for="send">Send to XIV</label> |
-        </span>
-
         <a class="navbar-icon" href="#" title="Shortcuts" id="help-icon">Ⓗ</a>
         <a class="navbar-icon" href="#" title="About" id="about-icon">ⓘ</a>
-        <a class="navbar-icon" href="#" title="Connect" id="connect-icon" hidden="">🖧</a>
       </span>
     </nav>
     <dialog id="about">
@@ -111,18 +105,6 @@
       <p><code>Ctrl-s</code>: Save to a file</p>
       <p><code>Ctrl-o</code>: Open a file</p>
       <p><code>Ctrl-/</code>: Open this help dialog</p>
-      <form method="dialog"><button>close</button></form>
-    </dialog>
-    <dialog id="connect">
-      <h2>Connector Configuration</h2>
-      <p>Enables this pad to send messages directly to FFXIV</p>
-      <span>
-        Chat2 Web URL
-        <input id="chat2url" placeholder="http://127.0.0.1:9000" />
-        <input id="chat2auth" placeholder="...your auth code" />
-        <input id="chat2connect" type="button" value="connect" />
-      </span>
-
       <form method="dialog"><button>close</button></form>
     </dialog>
     <script src="./script.js"></script>

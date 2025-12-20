@@ -152,16 +152,6 @@ class Settings {
     return this._data.doEmConvert;
   }
 
-  set doSendToGame(value) {
-    return this.setEvent("doSendToGame", () => {
-      this._data.doSendToGame = value;
-    });
-  }
-
-  get doSendToGame() {
-    return this._data.doSendToGame;
-  }
-
   set isOutOfCharacter(value) {
     return this.setEvent("isOutOfCharacter", () => {
       this._data.isOutOfCharacter = value;
@@ -170,79 +160,6 @@ class Settings {
 
   get isOutOfCharacter() {
     return this._data.isOutOfCharacter;
-  }
-}
-
-/**
- * `Chat2Connection` objects handle interfacing with the webinterface of the
- * [Chat2](https://github.com/Infiziert90/ChatTwo) dalamud plugin
- */
-class Chat2Connection {
-  static {
-    function isValidUrl(url) {
-      return false;
-    }
-  }
-
-  /**
-   * @param {String} url
-   */
-  constructor(url) {
-    if (!Chat2Connection.isValidUrl(url))
-      throw "Invalid url for chat2 interface";
-
-    this.status = false;
-    this.auth = false;
-    this.__xhr = new XMLHttpRequest(url);
-  }
-
-  /**
-   * Gate a function behind authentication with Chat2
-   * @param {(...any) => any} fn
-   * @returns {Boolean}
-   */
-  needAuth(fn) {
-    if (this.auth) return fn();
-    return false;
-  }
-
-  /**
-   * Attempt to authenticate
-   * @param {String} auth
-   * @param {() => void} onComplete
-   * @returns {Boolean}
-   */
-  authenticate(auth, onComplete) {
-    if (!/^[0-9]{6}$/.test(auth))
-      return badInput(`${this.className}: auth code must be 6 digit integer`);
-
-    this.__xhr.open("POST", "/auth", false, null, auth);
-    this.__xhr.setRequestHeader(
-      "Content-Type",
-      "application/x-www-form-urlencoded",
-    );
-
-    this.__xhr.send(`authcode=${auth}`);
-    if (this.__xhr.status !== 200) {
-      console.error(`${url}: Bad auth: ${this.__xhr.statusText}`);
-      return false;
-    }
-
-    return (this.auth = true);
-  }
-
-  /**
-   * Send a message to the configured chat2 interface
-   * @param {String} input
-   * @param {() => void} onComplete
-   * @returns {Boolean}
-   */
-  sendMessage(input, onComplete) {
-    return this.needAuth(() => {
-      this.__xhr.open("PUSH", "/send", false);
-      this.__xhr.setRequestHeader("Content-Type", "application/json");
-      this.__xhr.send(JSON.stringify({ message: input }));
-    });
   }
 }
 
@@ -271,9 +188,8 @@ const isOverLimit = (size, offset = 0) => {
  * @param {HTMLOListElement} preview
  * @param {Settings} settings
  * @param {String} prefix
- * @param {Chat2Connection?} chat2
  */
-const populatePreview = (box, preview, settings, prefix, chat2) => {
+const populatePreview = (box, preview, settings, prefix) => {
   var list_objects = [];
 
   formatLines(box.value, settings, prefix).forEach((line, i, self) => {
@@ -292,27 +208,13 @@ const populatePreview = (box, preview, settings, prefix, chat2) => {
     }
 
     li.onclick = function () {
-      if (
-        content.classList.contains(
-          "copied" || content.classList.contains("sent"),
-        )
-      ) {
+      if (content.classList.contains("copied")) {
         content.classList.remove("copied");
-        content.classList.remove("sent");
         return;
       }
 
-      if (!settings.doSendToGame || !chat2) {
-        content.classList.add("copied");
-        navigator.clipboard.writeText(content.textContent);
-        return;
-      }
-
-      content.classList.add("sending");
-      chat2?.sendMessage(content.textContent, () => {
-        content.classList.remove("sending");
-        content.classList.add("sent");
-      });
+      content.classList.add("copied");
+      navigator.clipboard.writeText(content.textContent);
     };
 
     li.appendChild(content);
@@ -476,7 +378,6 @@ const padSettings = new Settings("padSettings", {
   isOutOfCharacter: false,
   doSpellcheck: true,
   doEmConvert: true,
-  doSendToGame: false,
 });
 
 const initialize = () => {
@@ -504,12 +405,6 @@ const initialize = () => {
     /** @type {HTMLInputElement} */
     customChatInput: document.querySelector("#customchat-input"),
 
-    /** @type {HTMLInputElement} */
-    sendGameCheckbox: document.querySelector("#sendtogame"),
-
-    /** @type {HTMLSpanElement} */
-    sendGameContainer: document.querySelector("#sendcontainer"),
-
     /** @type {HTMLLinkElement} */
     saveLink: document.querySelector("#save a"),
 
@@ -518,9 +413,6 @@ const initialize = () => {
 
     /** @type {HTMLLinkElement} */
     openInput: document.querySelector("#open input"),
-
-    /** @type {HTMLLinkElement} */
-    chatTwoConnectButton: document.querySelector("#chat2connect"),
   };
 
   let allTruthy = all(staticElements);
@@ -531,15 +423,11 @@ const initialize = () => {
   /** @type {HTMLPreElement} */
   const previewbox = document.querySelector("#preview");
 
-  /** @type {Chat2Connection} */
-  var chat2connection;
-
   staticElements.textBox.value = localStorage.getItem(STORAGE_NAME) || "";
   staticElements.textBox.spellcheck = padSettings.doSpellcheck;
   staticElements.spellcheckCheckbox.checked = padSettings.doSpellcheck;
   staticElements.emDashCheckbox.checked = padSettings.doEmConvert;
   staticElements.oocCheckbox.checked = padSettings.isOutOfCharacter;
-  staticElements.sendGameCheckbox.checked = padSettings.doSendToGame;
 
   padSettings.addSetHandler("doSpellcheck", (value) => {
     staticElements.textBox.spellcheck = value;
@@ -555,34 +443,7 @@ const initialize = () => {
       previewbox,
       padSettings,
       getChatPrefix(),
-      chat2connection,
     );
-  };
-
-  const connectChat2 = () => {
-    var url = document.querySelector("#chat2url").value;
-    var auth = document.querySelector("#chat2auth").value;
-
-    if (chat2connection) return;
-    if (!url || !auth) return;
-
-    try {
-      chat2connection = new Chat2Connection(url);
-    } catch {
-      return;
-    }
-
-    chat2connection.authenticate(auth, () => {
-      document.querySelector("#chat2connect").onclick = disconnectChat2;
-      document.querySelector("#sendcontainer")?.setAttribute("hidden", "");
-    });
-  };
-
-  const disconnectChat2 = () => {
-    chat2connection = null;
-    document.querySelector("#sendtogame").checked = false;
-    document.querySelector("#sendcontainer")?.removeAttribute("hidden");
-    document.querySelector("#chat2connect").onclick = connectChat2;
   };
 
   /**
@@ -675,8 +536,6 @@ const initialize = () => {
     }
   };
 
-  staticElements.chatTwoConnectButton.onclick = connectChat2;
-
   staticElements.spellcheckCheckbox.onchange = function () {
     padSettings.doSpellcheck = this.checked;
   };
@@ -684,10 +543,6 @@ const initialize = () => {
   staticElements.emDashCheckbox.onchange = function () {
     padSettings.doEmConvert = this.checked;
     doUpdate();
-  };
-
-  staticElements.sendGameCheckbox.onchange = function () {
-    padSettings.doSendToGame = this.checked;
   };
 
   staticElements.oocCheckbox.onchange = function () {
