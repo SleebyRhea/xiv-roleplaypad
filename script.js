@@ -229,6 +229,43 @@ const populatePreview = (box, preview, settings, prefix) => {
 };
 
 /**
+ *
+ * @param {HTMLTextAreaElement} box
+ * @param {Settings} settings
+ * @param {String} prefix
+ */
+const formatLines = (lines, settings, prefix) => {
+  if (settings.doEmConvert) {
+    lines = lines.replace(/--/g, "—");
+  }
+
+  lines = lines.replace(/[ \t]+/g, " ");
+  var all_lines = lines.split(/\n/);
+  var count = 0;
+  var result = [];
+
+  all_lines.forEach((line) => {
+    if (/^\s*$/.test(line)) return;
+    count++;
+  });
+
+  all_lines.forEach((line) => {
+    if (/^\s*$/.test(line)) return;
+    result.push(...processLine(line, settings, prefix, count == 1));
+  });
+
+  count = result.length;
+
+  if (count <= 1) return result;
+
+  result.forEach((line, i, self) => {
+    self[i] = `${line.replace(/\s?$/, "")} (${i + 1}/${count})`;
+  });
+
+  return result;
+};
+
+/**
  * Split a string into lines each within the CHARACTER_LIMIT
  * @param {String} line
  * @param {Settings} settings
@@ -300,43 +337,6 @@ const processLine = (line, settings, prefix, singular) => {
   dbgLog("Final result:", results);
 
   return results;
-};
-
-/**
- *
- * @param {HTMLTextAreaElement} box
- * @param {Settings} settings
- * @param {String} prefix
- */
-const formatLines = (lines, settings, prefix) => {
-  if (settings.doEmConvert) {
-    lines = lines.replace(/--/g, "—");
-  }
-
-  lines = lines.replace(/[ \t]+/g, " ");
-  var all_lines = lines.split(/\n/);
-  var count = 0;
-  var result = [];
-
-  all_lines.forEach((line) => {
-    if (/^\s*$/.test(line)) return;
-    count++;
-  });
-
-  all_lines.forEach((line) => {
-    if (/^\s*$/.test(line)) return;
-    result.push(...processLine(line, settings, prefix, count == 1));
-  });
-
-  count = result.length;
-
-  if (count <= 1) return result;
-
-  result.forEach((line, i, self) => {
-    self[i] = `${line.replace(/\s?$/, "")} (${i + 1}/${count})`;
-  });
-
-  return result;
 };
 
 /**
