@@ -17,6 +17,9 @@ const PREFIX_PATTERNS = {
   shout: /^(?:\/sh|\/shout)\s/,
   emote: /^(?:\/em|\/emote)\s/,
   tell: /^(?:\/t|\/tell)\s+[^\s]+\s+[^\s]+@[^\s]+\s/,
+  freecompany: /^(?:\/fc|\/freecompany)\s/,
+  linkshell:
+    /^(?:\/ls[0-9]|\/linkshell[0-9]|\/cwls[0-9]|\/crossworldlinkshell[0-9])\s/,
 };
 
 /**
@@ -406,6 +409,9 @@ const initialize = () => {
     customChatInput: document.querySelector("#customchat-input"),
 
     /** @type {HTMLLinkElement} */
+    helpLink: document.querySelector("#help-icon"),
+
+    /** @type {HTMLLinkElement} */
     saveLink: document.querySelector("#save a"),
 
     /** @type {HTMLLinkElement} */
@@ -416,9 +422,8 @@ const initialize = () => {
   };
 
   let allTruthy = all(staticElements);
-  if (!allTruthy[0]) {
+  if (!allTruthy[0])
     throw `Cannot load, missing required elements: ${allTruthy[1]}`;
-  }
 
   /** @type {HTMLPreElement} */
   const previewbox = document.querySelector("#preview");
@@ -461,7 +466,7 @@ const initialize = () => {
           event.preventDefault();
           break;
         case "/":
-          document.querySelector("#help-icon").click();
+          staticElements.helpLink.click();
           event.preventDefault();
           break;
       }

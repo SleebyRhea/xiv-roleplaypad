@@ -84,6 +84,14 @@ body {
       color: #ffb8de;
     }
 
+    & span.freecompany {
+      color: #abdbe5;
+    }
+
+    & span.linkshell {
+      color: #d4ff7d;
+    }
+
     & span.overlimit {
       color: red !important;
     }
