@@ -76,7 +76,7 @@ const getMessageClass = (message) => {
     return chatType;
   }
 
-  return "say";
+  return "command";
 };
 
 class Settings {
@@ -235,17 +235,21 @@ const populatePreview = (box, preview, settings, prefix) => {
  * @param {String} prefix
  */
 const formatLines = (lines, settings, prefix) => {
-  if (settings.doEmConvert) {
-    lines = lines.replace(/--/g, "—");
-  }
-
+  if (settings.doEmConvert) lines = lines.replace(/--/g, "—");
   lines = lines.replace(/[ \t]+/g, " ");
-  var all_lines = lines.split(/\n/);
-  var count = 0;
-  var result = [];
+
+  let all_lines = lines.split(/\n/);
+  let count = 0;
+  let skipped = 0;
+  let offset = 0;
+  let result = [];
 
   all_lines.forEach((line) => {
     if (/^\s*$/.test(line)) return;
+    if (getMessageClass(line) == "command") {
+      offset++;
+      return;
+    }
     count++;
   });
 
@@ -254,12 +258,18 @@ const formatLines = (lines, settings, prefix) => {
     result.push(...processLine(line, settings, prefix, count == 1));
   });
 
-  count = result.length;
+  count = result.length - offset;
 
   if (count <= 1) return result;
 
   result.forEach((line, i, self) => {
-    self[i] = `${line.replace(/\s?$/, "")} (${i + 1}/${count})`;
+    console.log(getMessageClass(line), line);
+    if (getMessageClass(self[i]) === "command") {
+      console.log("SKIPPING");
+      skipped++;
+      return;
+    }
+    self[i] = `${line.replace(/\s?$/, "")} (${i + 1 - skipped}/${count})`;
   });
 
   return result;

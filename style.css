@@ -92,6 +92,26 @@ body {
       color: #d4ff7d;
     }
 
+    & span.command {
+      color: #f7f7f7;
+    }
+
+    & span.command:before {
+      content: url("https://cdn.discordapp.com/emojis/435886977531772941.webp");
+      display: inline-block;
+      padding-right: 2px;
+      padding-top: 1px;
+      vertical-align: middle;
+    }
+
+    & span.command:after {
+      content: url("https://cdn.discordapp.com/emojis/435886988764250133.webp");
+      display: inline-block;
+      padding-top: 1px;
+      padding-left: 2px;
+      vertical-align: middle;
+    }
+
     & span.overlimit {
       color: red !important;
     }
@@ -112,12 +132,10 @@ body {
   & #inputarea {
     & textarea {
       position: fixed;
-      /* left: 2rem; */
       bottom: 2rem;
       width: 100%;
       height: 40%;
       box-sizing: border-box;
-      /* border: none; */
       outline: none;
       resize: none;
       font-family: monospace;
