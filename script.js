@@ -433,7 +433,6 @@ const initialize = () => {
     staticElements.textBox.spellcheck = value;
   });
 
-  makeModal("connect");
   makeModal("about");
   makeModal("help");
 
