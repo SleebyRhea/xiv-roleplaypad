@@ -60,20 +60,44 @@ body {
       color: #666;
     }
 
-    & li.overlimit {
-      color: red;
+    & span.party {
+      color: #66e5ff;
     }
 
-    & li.copied {
-      color: green;
+    & span.say {
+      color: #f7f7f7;
     }
 
-    & li.sending {
-      color: gray;
+    & span.yell {
+      color: #ffff00;
     }
 
-    & li.sent {
-      color: lightskyblue;
+    & span.shout {
+      color: #ffa666;
+    }
+
+    & span.emote {
+      color: #bafff0;
+    }
+
+    & span.tell {
+      color: #ffb8de;
+    }
+
+    & span.overlimit {
+      color: red !important;
+    }
+
+    & span.copied {
+      color: green !important;
+    }
+
+    & span.sending {
+      color: gray !important;
+    }
+
+    & span.sent {
+      color: lightskyblue !important;
     }
   }
 

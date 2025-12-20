@@ -10,6 +10,15 @@ const DEBUGGING = false;
  */
 const CHAR_COUNT_OFFSET = 8;
 
+const PREFIX_PATTERNS = {
+  say: /^(?:\/s|\/say)\s/,
+  party: /^(?:\/p|\/party)\s/,
+  yell: /^(?:\/y|\/yell)\s/,
+  shout: /^(?:\/sh|\/shout)\s/,
+  emote: /^(?:\/em|\/emote)\s/,
+  tell: /^(?:\/t|\/tell)\s+[^\s]+\s+[^\s]+@[^\s]+\s/,
+};
+
 /**
  * Returns false and sends an error message to the console
  * @param {String} message
@@ -18,6 +27,25 @@ const CHAR_COUNT_OFFSET = 8;
 const badInput = (message) => {
   console.error(msg);
   return false;
+};
+
+/**
+ * Store an object in local storage
+ * @param {String} name[]
+ * @param {any} what
+ */
+const storeLocally = (name, what) => {
+  localStorage.setItem(name, what);
+};
+
+/**
+ * Lot something to the console if debugging is enabled
+ * @param {any} what
+ */
+const dbgLog = (...what) => {
+  if (DEBUGGING) {
+    console.log("DEBUG", ...what);
+  }
 };
 
 /**
@@ -32,6 +60,20 @@ const all = (object) => {
   }
 
   return [true];
+};
+
+/**
+ *
+ * @param {String} message
+ */
+const getMessageClass = (message) => {
+  for (let chatType in PREFIX_PATTERNS) {
+    if (!PREFIX_PATTERNS[chatType]) continue;
+    if (!PREFIX_PATTERNS[chatType].test(message)) continue;
+    return chatType;
+  }
+
+  return "say";
 };
 
 class Settings {
@@ -205,31 +247,6 @@ class Chat2Connection {
 }
 
 /**
- * Store an object in local storage
- * @param {String} name[]
- * @param {any} what
- */
-const storeLocally = (name, what) => {
-  localStorage.setItem(name, what);
-};
-
-const dbgLogFn = (what, fn) => {
-  if (DEBUGGING) {
-    return (...arg) => {
-      return fn(...arg);
-    };
-  }
-
-  return fn;
-};
-
-const dbgLog = (what) => {
-  if (DEBUGGING) {
-    console.log("DEBUG", what);
-  }
-};
-
-/**
  * @param {Number} size
  * @param {Number} offset
  * @returns {Boolean}
@@ -268,28 +285,34 @@ const populatePreview = (box, preview, settings, prefix, chat2) => {
     content.className = "content";
     metadata.className = "metadata";
     metadata.textContent = `${line.length}\n${i + 1}/${self.length}`;
+    content.classList.add(getMessageClass(line));
 
     if (line.length > CHARACTER_LIMIT) {
       li.className = "overlimit";
     }
 
     li.onclick = function () {
-      var messageClass = settings.doSendToGame ? "sent" : "copied";
-
-      if (li.classList.contains("copied" || li.classList.contains("copied"))) {
-        li.classList.remove("copied");
-        li.classList.remove("sent");
+      if (
+        content.classList.contains(
+          "copied" || content.classList.contains("sent"),
+        )
+      ) {
+        content.classList.remove("copied");
+        content.classList.remove("sent");
         return;
       }
 
       if (!settings.doSendToGame || !chat2) {
+        content.classList.add("copied");
         navigator.clipboard.writeText(content.textContent);
-      } else {
-        li.classList.add("sending");
-        chat2?.sendMessage(content.textContent, () => {
-          li.classList.add(messageClass);
-        });
+        return;
       }
+
+      content.classList.add("sending");
+      chat2?.sendMessage(content.textContent, () => {
+        content.classList.remove("sending");
+        content.classList.add("sent");
+      });
     };
 
     li.appendChild(content);
