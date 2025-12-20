@@ -381,7 +381,7 @@ const processLine = (line, settings, prefix, singular) => {
  * @param {String} prefix
  */
 const formatLines = (lines, settings, prefix) => {
-  if (settings.em_dash) {
+  if (settings.doEmConvert) {
     lines = lines.replace(/--/g, "—");
   }
 
