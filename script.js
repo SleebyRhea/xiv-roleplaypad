@@ -18,8 +18,7 @@ const PREFIX_PATTERNS = {
   emote: /^(?:\/em|\/emote)\s/,
   tell: /^(?:\/t|\/tell)\s+[^\s]+\s+[^\s]+@[^\s]+\s/,
   freecompany: /^(?:\/fc|\/freecompany)\s/,
-  linkshell:
-    /^(?:\/ls[0-9]|\/linkshell[0-9]|\/cwls[0-9]|\/crossworldlinkshell[0-9])\s/,
+  linkshell: /^(?:\/linkshell[1-9]|\/cwlinkshell[1-9])\s/,
 };
 
 /**
@@ -263,7 +262,6 @@ const formatLines = (lines, settings, prefix) => {
   if (count <= 1) return result;
 
   result.forEach((line, i, self) => {
-    console.log(getMessageClass(line), line);
     if (getMessageClass(self[i]) === "command") {
       console.log("SKIPPING");
       skipped++;
