@@ -235,23 +235,49 @@ const populatePreview = (box, preview, settings, prefix) => {
  */
 const formatLines = (lines, settings, prefix) => {
   if (settings.doEmConvert) lines = lines.replace(/--/g, "—");
-  lines = lines.replace(/[ \t]+/g, " ");
+  lines = lines.replace(/[ \t]+/g, " ").replace(/^\s+/g, "");
 
   let all_lines = lines.split(/\n/);
-  let count = 0;
-  let skipped = 0;
-  let offset = 0;
   let result = [];
 
-  all_lines.forEach((line) => {
-    if (/^\s*$/.test(line)) return;
-    count++;
-  });
+  let count = 0;
+  let offset = 0;
+  let skipped = 0;
+  let singular = true;
 
-  all_lines.forEach((line) => {
+  all_lines.forEach((line, i) => {
     if (/^\s*$/.test(line)) return;
-    let lines = processLine(line, settings, prefix, count == 1);
+
+    // Since processLine needs to know whether or not it's running against only one
+    // message in the list, rather than iterate against the entire array, we borrow
+    // utilize the 'singular' variable, and simply flip it to false once another is
+    // found in the following loop. If it truly /is/ singular, then it will only run
+    // the once anyway. And if it's not, we short circuit early with a simple if-then.
+    if (singular) {
+      let on = i + 1;
+      while (all_lines[on] !== undefined || all_lines[on] !== null) {
+        if (/^\s*$/.test(all_lines[on])) {
+          on++;
+          continue;
+        }
+
+        singular = false;
+        break;
+      }
+    }
+
+    let lines = processLine(line, settings, prefix, singular);
     result.push(...lines);
+    count += lines.length;
+
+    // We use the message class to determine whether or not we need to offset the overall
+    // count of messages downwards. This is done via an offset, as processLine() may have
+    // split messages into multiples, so we take the length of the resultant variable
+    // and simply subtract said offset.
+    //
+    // TODO:
+    //    We could deduplicate work by simply having processLine return the command class
+    //    but that feels unnecessary; it's a trivial amount of work on the whole anyway.
     for (let l in lines) {
       if (getMessageClass(lines[l]) === "command") {
         offset++;
@@ -260,18 +286,18 @@ const formatLines = (lines, settings, prefix) => {
     }
   });
 
-  console.log(result.length, offset);
-  count = result.length - offset;
-
+  count = count - offset;
   if (count <= 1) return result;
 
+  // Because we cannot know the end result of the string parsing before it is done, we
+  // loop on the result and append ennumeration tags to the end after the fact.
   result.forEach((line, i, self) => {
     if (getMessageClass(line) === "command") {
       skipped++;
       return;
     }
 
-    self[i] = `${line.replace(/\s?$/, "")} (${i + 1 - skipped}/${count})`;
+    self[i] = `${line} (${i + 1 - skipped}/${count})`;
   });
 
   return result;
@@ -297,13 +323,23 @@ const processLine = (line, settings, prefix, singular) => {
 
   var totalOffset = prefix.length + 1;
 
+  /**
+   * @param {String} input
+   * @returns {String}
+   */
   var finishLine = (input) => {
-    return `${prefix} ${input}`;
+    return `${prefix} ${input.replace(/\s*$/, "")}`;
   };
 
   if (settings.isOutOfCharacter) {
     totalOffset += 4;
     finishLine = (input) => {
+      // If the message is a non-chat command, then we *do not* want to enclose
+      // in parenthesis. Though... why you would be running them there, I'm admittedly
+      // not quite sure. This is very much an edge case.
+      if (getMessageClass(`${prefix} ${input}`) === "command")
+        return `${prefix} ${input.replace(/\s*$/, "")}`;
+
       return `${prefix} ((${input.replace(/\s*$/, "")}))`;
     };
   }
@@ -344,7 +380,7 @@ const processLine = (line, settings, prefix, singular) => {
     results[on] += word + " ";
   });
 
-  results[on] = finishLine(results[on].replace(/[ \t]$/, ""));
+  results[on] = finishLine(results[on]);
 
   dbgLog("Final result:", results);
 

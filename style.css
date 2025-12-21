@@ -99,7 +99,8 @@ body {
     & span.command:before {
       content: url("https://cdn.discordapp.com/emojis/435886977531772941.webp");
       display: inline-block;
-      padding-right: 2px;
+      padding-right: 0;
+      padding-left: 0;
       padding-top: 1px;
       vertical-align: middle;
     }
@@ -107,8 +108,9 @@ body {
     & span.command:after {
       content: url("https://cdn.discordapp.com/emojis/435886988764250133.webp");
       display: inline-block;
-      padding-top: 1px;
-      padding-left: 2px;
+      padding-top: 2px;
+      padding-left: 0;
+      padding-right: 0;
       vertical-align: middle;
     }
 
