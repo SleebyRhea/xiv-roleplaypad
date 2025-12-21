@@ -245,28 +245,32 @@ const formatLines = (lines, settings, prefix) => {
 
   all_lines.forEach((line) => {
     if (/^\s*$/.test(line)) return;
-    if (getMessageClass(line) == "command") {
-      offset++;
-      return;
-    }
     count++;
   });
 
   all_lines.forEach((line) => {
     if (/^\s*$/.test(line)) return;
-    result.push(...processLine(line, settings, prefix, count == 1));
+    let lines = processLine(line, settings, prefix, count == 1);
+    result.push(...lines);
+    for (let l in lines) {
+      if (getMessageClass(lines[l]) === "command") {
+        offset++;
+        return;
+      }
+    }
   });
 
+  console.log(result.length, offset);
   count = result.length - offset;
 
   if (count <= 1) return result;
 
   result.forEach((line, i, self) => {
-    if (getMessageClass(self[i]) === "command") {
-      console.log("SKIPPING");
+    if (getMessageClass(line) === "command") {
       skipped++;
       return;
     }
+
     self[i] = `${line.replace(/\s?$/, "")} (${i + 1 - skipped}/${count})`;
   });
 
