@@ -1,6 +1,7 @@
 const STORAGE_NAME = "padContent";
 const CHARACTER_LIMIT = 500;
 const DEBUGGING = false;
+const VERSION = "v0.0.1";
 
 /**
  * The amount of characters that make up: (##/##)
@@ -236,6 +237,7 @@ const populatePreview = (box, preview, settings, prefix) => {
 const formatLines = (lines, settings, prefix) => {
   if (settings.doEmConvert) lines = lines.replace(/--/g, "—");
   lines = lines.replace(/[ \t]+/g, " ").replace(/^\s+/g, "");
+  lines = lines.replace(/\s+>>/g, " ");
 
   let all_lines = lines.split(/\n/);
   let result = [];
