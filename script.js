@@ -79,6 +79,25 @@ const getMessageClass = (message) => {
   return "command";
 };
 
+class Version {
+  #_currentVersion = VERSION;
+  #_hasChanges = false;
+  #_prior = "";
+
+  constructor() {
+    this.#_prior = localStorage.get("version") ?? "";
+    if (this.#_prior === "") this.#_hasChanges = true;
+  }
+
+  get currentVersion() {
+    return this.#_currentVersion;
+  }
+
+  get hasChanges() {
+    return this.#_hasChanges;
+  }
+}
+
 class Settings {
   /**
    * @param {String} name
