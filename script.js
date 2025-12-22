@@ -99,30 +99,35 @@ class Version {
 }
 
 class Settings {
+  #_load = () => {};
+  #_save = () => {};
+
+  #_data = {};
+  #_onSet = {};
+
   /**
    * @param {String} name
    * @param {Object} defaults
    */
   constructor(name, defaults) {
-    this._load = () => {
-      let stored = JSON.parse(localStorage.getItem(name));
-      this._data = { ...defaults, ...stored };
+    this.#_load = () => {
+      this.#_data = { ...defaults, ...JSON.parse(localStorage.getItem(name)) };
     };
 
-    this._save = () => {
-      localStorage.setItem(name, JSON.stringify(this._data));
+    this.#_save = () => {
+      localStorage.setItem(name, JSON.stringify(this.#_data));
     };
 
-    this._onSet = {};
+    this.#_onSet = {};
     this.load();
   }
 
   save() {
-    return this._save();
+    return this.#_save();
   }
 
   load() {
-    return this._load();
+    return this.#_load();
   }
 
   /**
@@ -136,9 +141,9 @@ class Settings {
       fn();
       this.save();
 
-      if (this._onSet[name] && Array.isArray(this._onSet[name])) {
-        this._onSet[name].forEach((fn) => {
-          return fn(this._data[name]);
+      if (this.#_onSet[name] && Array.isArray(this._onSet[name])) {
+        this.#_onSet[name].forEach((fn) => {
+          return fn(this.#_data[name]);
         });
       }
     } catch {
@@ -147,62 +152,43 @@ class Settings {
   }
 
   addSetHandler(name, fn) {
-    if (!this._onSet[name]) {
-      this._onSet[name] = new Array();
+    if (!this.#_onSet[name]) {
+      this.#_onSet[name] = new Array();
     }
 
-    this._onSet[name].push(fn);
+    this.#_onSet[name].push(fn);
   }
 
   set doSpellcheck(value) {
     return this.setEvent("doSpellcheck", () => {
-      this._data.doSpellcheck = value;
+      this.#_data.doSpellcheck = value;
     });
   }
 
   get doSpellcheck() {
-    return this._data.doSpellcheck;
+    return this.#_data.doSpellcheck;
   }
 
   set doEmConvert(value) {
     return this.setEvent("doEmConvert", () => {
-      this._data.doEmConvert = value;
+      this.#_data.doEmConvert = value;
     });
   }
 
   get doEmConvert() {
-    return this._data.doEmConvert;
+    return this.#_data.doEmConvert;
   }
 
   set isOutOfCharacter(value) {
     return this.setEvent("isOutOfCharacter", () => {
-      this._data.isOutOfCharacter = value;
+      this.#_data.isOutOfCharacter = value;
     });
   }
 
   get isOutOfCharacter() {
-    return this._data.isOutOfCharacter;
+    return this.#_data.isOutOfCharacter;
   }
 }
-
-/**
- * @param {Number} size
- * @param {Number} offset
- * @returns {Boolean}
- */
-const isOverLimit = (size, offset = 0) => {
-  var r = Math.floor(
-    (size - 1) / (CHARACTER_LIMIT - CHAR_COUNT_OFFSET - offset),
-  );
-
-  dbgLog(
-    `Math.floor((${
-      size - 1
-    } / (${CHARACTER_LIMIT} - ${CHAR_COUNT_OFFSET} - ${offset}))) = ${r} >= 1`,
-  );
-
-  return 1 <= r;
-};
 
 /**
  *
