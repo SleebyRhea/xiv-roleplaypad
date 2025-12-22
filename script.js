@@ -66,6 +66,16 @@ const all = (object) => {
 };
 
 /**
+ * Get the size in bytes of a string by converting it into a Blob- this means that should
+ * never have to worry about whether or not non-ascii characters will push the chat over
+ * the limit.
+ * @type {String} str
+ */
+getLength = (str) => {
+  return new Blob([str]).size;
+};
+
+/**
  *
  * @param {String} message
  */
@@ -208,7 +218,7 @@ const populatePreview = (box, preview, settings, prefix) => {
     content.textContent = line;
     content.className = "content";
     metadata.className = "metadata";
-    metadata.textContent = `${line.length}\n${i + 1}/${self.length}`;
+    metadata.textContent = `${getLength(line)}\n${i + 1}/${self.length}`;
     content.classList.add(getMessageClass(line));
 
     if (line.length > CHARACTER_LIMIT) {
@@ -335,7 +345,7 @@ const processLine = (line, settings, prefix, singular) => {
    * @returns {String}
    */
   var finishLine = (input) => {
-    return `${prefix} ${input.replace(/\s*$/, "")}`;
+    return `${prefix} ${input}`.replace(/(^\s+|\s+$)/g, "");
   };
 
   if (settings.isOutOfCharacter) {
@@ -345,18 +355,18 @@ const processLine = (line, settings, prefix, singular) => {
       // in parenthesis. Though... why you would be running them there, I'm admittedly
       // not quite sure. This is very much an edge case.
       if (getMessageClass(`${prefix} ${input}`) === "command")
-        return `${prefix} ${input.replace(/\s*$/, "")}`;
+        return `${prefix} ${input}`.replace(/(^\s+|\s+$)/g, "");
 
-      return `${prefix} ((${input.replace(/\s*$/, "")}))`;
+      return `${prefix} ((${input}))`.replace(/(^\s+|\s+$)/g, "");
     };
   }
 
-  if (singular && line.length <= CHARACTER_LIMIT - totalOffset) {
+  if (singular && line.length + totalOffset <= CHARACTER_LIMIT) {
     dbgLog(`processLine: Line length(${line.length}) <= ${CHARACTER_LIMIT}`);
     return [finishLine(line)];
   }
 
-  if (!isOverLimit(line.length, totalOffset)) {
+  if (CHARACTER_LIMIT >= line.length + totalOffset + CHAR_COUNT_OFFSET) {
     dbgLog(`Not over line limit: ${line.length}`);
     return [finishLine(line)];
   }
@@ -365,26 +375,31 @@ const processLine = (line, settings, prefix, singular) => {
 
   var words = line.split(" ");
   var results = [""];
-  var count = 0;
   var on = 0;
 
-  words.forEach((word) => {
-    count += word.length + 1;
-    dbgLog(`On word '${word}' [${count}]`);
+  words.forEach((word, i) => {
+    results[on] += word + " ";
 
-    if (isOverLimit(count, totalOffset)) {
-      dbgLog(`Breaking up words on: ${word}`);
-      count = 0;
+    // If the next word exists, peek at its length, and if its length would send the next
+    // line over the limit, we split it up here.
+    if (
+      words[i + 1] &&
+      CHARACTER_LIMIT <=
+        getLength(results[on]) +
+          1 +
+          getLength(words[i + 1]) +
+          CHAR_COUNT_OFFSET +
+          totalOffset
+    ) {
       results[on] = finishLine(results[on]);
       results[++on] = "";
+
       if (!isSplit) {
         isSplit = true;
         totalOffset += 2;
-        prefix = `${prefix} | `;
+        prefix = `${prefix} |`;
       }
     }
-
-    results[on] += word + " ";
   });
 
   results[on] = finishLine(results[on]);
