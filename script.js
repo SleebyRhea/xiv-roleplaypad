@@ -22,6 +22,16 @@ const PREFIX_PATTERNS = {
   linkshell: /^(?:\/linkshell[1-9]|\/cwlinkshell[1-9])\s/,
 };
 
+const hasChanges = () => {
+  let priorVersion = localStorage.getItem("VERSION");
+  if (priorVersion !== VERSION) {
+    localStorage.setItem("version", VERSION);
+    return true;
+  }
+
+  return false;
+};
+
 /**
  * Returns false and sends an error message to the console
  * @param {String} message
@@ -30,15 +40,6 @@ const PREFIX_PATTERNS = {
 const badInput = (message) => {
   console.error(msg);
   return false;
-};
-
-/**
- * Store an object in local storage
- * @param {String} name[]
- * @param {any} what
- */
-const storeLocally = (name, what) => {
-  localStorage.setItem(name, what);
 };
 
 /**
@@ -88,25 +89,6 @@ const getMessageClass = (message) => {
 
   return "command";
 };
-
-class Version {
-  #_currentVersion = VERSION;
-  #_hasChanges = false;
-  #_prior = "";
-
-  constructor() {
-    this.#_prior = localStorage.get("version") ?? "";
-    if (this.#_prior === "") this.#_hasChanges = true;
-  }
-
-  get currentVersion() {
-    return this.#_currentVersion;
-  }
-
-  get hasChanges() {
-    return this.#_hasChanges;
-  }
-}
 
 class Settings {
   #_load = () => {};
@@ -572,7 +554,7 @@ const initialize = () => {
     doUpdate();
     window.clearTimeout(timeoutID);
     timeoutID = window.setTimeout(() => {
-      storeLocally(STORAGE_NAME, staticElements.textBox.value);
+      localStorage.setItem(STORAGE_NAME, staticElements.textBox.value);
     }, 1000);
   };
 
@@ -636,7 +618,7 @@ const initialize = () => {
   );
 
   window.onbeforeunload = function () {
-    storeLocally(STORAGE_NAME, staticElements.textBox.value);
+    localStorage.setItem(STORAGE_NAME, staticElements.textBox.value);
     padSettings.save();
   };
 
