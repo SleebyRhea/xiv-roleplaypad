@@ -662,10 +662,6 @@ const initialize = () => {
   staticElements.previewNameInput.value = padSettings.previewName;
   staticElements.autoscrollCheckbox.checked = padSettings.doAutoscroll;
 
-  padSettings.addSetHandler("doSpellcheck", (value) => {
-    staticElements.textBox.spellcheck = value;
-  });
-
   makeModal("settings");
   makeModal("about");
   makeModal("help");
@@ -771,6 +767,7 @@ const initialize = () => {
 
   staticElements.spellcheckCheckbox.onchange = function () {
     padSettings.doSpellcheck = this.checked;
+    staticElements.textBox.spellcheck = this.checked;
   };
 
   staticElements.emDashCheckbox.onchange = function () {
