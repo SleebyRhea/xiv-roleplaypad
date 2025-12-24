@@ -13,14 +13,16 @@
     <!-- <script type="text/javascript" src="https://livejs.com/live.js#html,css,js"></script> -->
   </head>
   <body>
+
     <div id="editor">
       <ul id="preview"></ul>
-        <textarea
-          id="textbox"
-          autofocus="autofocus"
-          placeholder="type here"
-        ></textarea>
+      <textarea
+        id="textbox"
+        autofocus="autofocus"
+        placeholder="type here"
+      ></textarea>
     </div>
+
     <nav>
       <span id="chatselector">
         <input
@@ -51,6 +53,7 @@
           placeholder="/tell first last@server"
         />
       </span>
+
       <span id="controls">
         <span id="open" hidden="">
           <input type="file" value="open" />
@@ -68,13 +71,12 @@
         <input type="checkbox" id="spellcheck" />
         <label for="spellcheck">Spellcheck</label> |
 
-        <input type="checkbox" id="emdash" />
-        <label for="emdash">Convert -- to —</label> |
-
         <a class="navbar-icon" href="#" title="Shortcuts" id="help-icon">Ⓗ</a>
         <a class="navbar-icon" href="#" title="About" id="about-icon">ⓘ</a>
+        <a class="navbar-icon" href="#" title="About" id="settings-icon">☰</a>
       </span>
     </nav>
+
     <dialog id="about">
       <h2>XIV Roleplaypad</h2>
       <p>
@@ -92,6 +94,7 @@
       </p>
       <form method="dialog"><button>close</button></form>
     </dialog>
+
     <dialog id="help">
       <h2>Help</h2>
       <p>Simply type in the textbox box at the bottom, and go.</p>
@@ -105,10 +108,36 @@
       <p><code>Ctrl-/</code>: Open this help dialog</p>
       <form method="dialog"><button>close</button></form>
     </dialog>
-    <script src="./script.js"></script>
+    
     <dialog id="changelog">
       <h2>Changelog</h2>
       <form method="dialog"><button>close</button></form>
     </dialog>
+
+    <dialog id="settings">
+      <h2>Additional Settings</h2>
+
+      <span class="setting-container">
+        <label class="setting-label" for="set-preview-name">Preview Name</label>
+        <input class="setting-input" id="set-preview-name" placeholder="Firstname Lastname" />
+      </span>
+
+      <hr/>
+
+      <span class="setting-container">
+        <label class="setting-label" for="set-autoscroll">Autoscrolling</label>
+        <span class="setting-description">Preview will scroll to input <input class="setting-input" id="set-autoscroll" type="checkbox" value="Autoscroll" /></span>
+      </span>
+
+      <span class="setting-container">
+        <label class="setting-label" for="emdash">Emdash Conversion</label>
+        <span class="setting-description">Convert -- inputs to — <input type="checkbox" id="emdash" /></span>
+      </span>
+      
+      <br/>
+      <form method="dialog"><button>close</button></form>
+    </dialog>
+
+    <script src="./script.js"></script>
   </body>
 </html>
