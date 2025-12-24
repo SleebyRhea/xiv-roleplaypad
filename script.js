@@ -1,7 +1,6 @@
 const STORAGE_NAME = "padContent";
 const CHARACTER_LIMIT = 500;
 const DEBUGGING = false;
-const VERSION = "v0.0.1";
 
 /**
  * The amount of characters that make up: (##/##)
@@ -12,30 +11,19 @@ const VERSION = "v0.0.1";
 const CHAR_COUNT_OFFSET = 8;
 
 const PREFIX_PATTERNS = {
-  say: /^(?:\/s|\/say)\s/,
-  party: /^(?:\/p|\/party)\s/,
-  yell: /^(?:\/y|\/yell)\s/,
-  shout: /^(?:\/sh|\/shout)\s/,
-  emote: /^(?:\/em|\/emote)\s/,
-  tell: /^(?:\/t|\/tell)\s+[^\s]+\s+[^\s]+@[^\s]+\s/,
-  freecompany: /^(?:\/fc|\/freecompany)\s/,
-  linkshell: /^(?:\/linkshell[1-9]|\/cwlinkshell[1-9])\s/,
-};
-
-const hasChanges = () => {
-  let priorVersion = localStorage.getItem("VERSION");
-  if (priorVersion !== VERSION) {
-    localStorage.setItem("version", VERSION);
-    return true;
-  }
-
-  return false;
+  say: /^(\/s|\/say)\s/,
+  party: /^(\/p|\/party)\s/,
+  yell: /^(\/y|\/yell)\s/,
+  shout: /^(\/sh|\/shout)\s/,
+  emote: /^(\/em|\/emote)\s/,
+  tell: /^(\/t|\/tell)\s+(?<target>[^@\s]+\s+[^@\s]+@[@a-zA-Z]+)\s/,
+  freecompany: /^(\/fc|\/freecompany)\s/,
+  linkshell: /^(?:\/(?<cw>cw)?linkshell(?<linkshell>[1-9]))\s/,
 };
 
 /**
  * Returns false and sends an error message to the console
  * @param {String} message
- * @returns
  */
 const badInput = (message) => {
   console.error(msg);
@@ -90,36 +78,91 @@ const getMessageClass = (message) => {
   return "command";
 };
 
-class Settings {
-  #_load = () => {};
-  #_save = () => {};
+/**
+ *
+ * @param {String} line
+ * @param {String} cls
+ * @param {Settings} settings
+ */
+const getLinePreview = (line, cls, settings) => {
+  /** @type {RegExp} */
+  let rgx = PREFIX_PATTERNS[cls];
 
-  #_data = {};
-  #_onSet = {};
+  if (!rgx) return line;
+
+  let match = rgx.exec(line);
+  if (!match) return line;
+
+  switch (cls) {
+    case "yell":
+    case "shout":
+    case "say":
+      line = `${settings.previewName}@Server: ${line.replace(rgx, "")}`;
+      break;
+
+    case "party":
+      line = `(${settings.previewName}@Server) ${line.replace(rgx, "")}`;
+      break;
+
+    case "emote":
+      line = `${settings.previewName}@Server ${line.replace(rgx, "")}`;
+      break;
+
+    case "linkshell":
+      let ls_groups = rgx.exec(line)?.groups;
+      if (!ls_groups) break;
+
+      let cw = ls_groups["cw"]?.toUpperCase() ?? "";
+      let ls = ls_groups["linkshell"];
+      line = `[${cw}LS${ls}]<${settings.previewName}@Server> ${line.replace(rgx, "")}`;
+      break;
+
+    case "freecompany":
+      line = `[FC]<${settings.previewName}@Server> ${line.replace(rgx, "")}`;
+      break;
+
+    case "tell":
+      let tell_groups = rgx.exec(line)?.groups;
+      if (!tell_groups) break;
+
+      let target = tell_groups["target"];
+      line = `>> ${target}: ${line.replace(rgx, "")}`;
+      break;
+  }
+
+  return line;
+};
+
+class Settings {
+  #load = () => {};
+  #save = () => {};
+
+  #data = {};
+  #onSet = {};
 
   /**
    * @param {String} name
    * @param {Object} defaults
    */
   constructor(name, defaults) {
-    this.#_load = () => {
-      this.#_data = { ...defaults, ...JSON.parse(localStorage.getItem(name)) };
+    this.#load = () => {
+      this.#data = { ...defaults, ...JSON.parse(localStorage.getItem(name)) };
     };
 
-    this.#_save = () => {
-      localStorage.setItem(name, JSON.stringify(this.#_data));
+    this.#save = () => {
+      localStorage.setItem(name, JSON.stringify(this.#data));
     };
 
-    this.#_onSet = {};
+    this.#onSet = {};
     this.load();
   }
 
   save() {
-    return this.#_save();
+    return this.#save();
   }
 
   load() {
-    return this.#_load();
+    return this.#load();
   }
 
   /**
@@ -133,9 +176,9 @@ class Settings {
       fn();
       this.save();
 
-      if (this.#_onSet[name] && Array.isArray(this._onSet[name])) {
-        this.#_onSet[name].forEach((fn) => {
-          return fn(this.#_data[name]);
+      if (this.#onSet[name] && Array.isArray(this._onSet[name])) {
+        this.#onSet[name].forEach((fn) => {
+          return fn(this.#data[name]);
         });
       }
     } catch {
@@ -144,45 +187,113 @@ class Settings {
   }
 
   addSetHandler(name, fn) {
-    if (!this.#_onSet[name]) {
-      this.#_onSet[name] = new Array();
+    if (!this.#onSet[name]) {
+      this.#onSet[name] = new Array();
     }
 
-    this.#_onSet[name].push(fn);
+    this.#onSet[name].push(fn);
   }
 
+  /**
+   * @param {Boolean} value
+   */
   set doSpellcheck(value) {
     return this.setEvent("doSpellcheck", () => {
-      this.#_data.doSpellcheck = value;
+      this.#data.doSpellcheck = value;
     });
   }
 
+  /**
+   * @returns {Boolean}
+   */
   get doSpellcheck() {
-    return this.#_data.doSpellcheck;
+    return this.#data.doSpellcheck;
   }
 
+  /**
+   * @param {Boolean} value
+   */
   set doEmConvert(value) {
     return this.setEvent("doEmConvert", () => {
-      this.#_data.doEmConvert = value;
+      this.#data.doEmConvert = value;
     });
   }
 
+  /**
+   * @returns {Boolean}
+   */
   get doEmConvert() {
-    return this.#_data.doEmConvert;
+    return this.#data.doEmConvert;
   }
 
+  /**
+   * @param {Boolean} value
+   */
+  set doAutoscroll(value) {
+    return this.setEvent("doAutoscroll", () => {
+      this.#data.doAutoscroll = value;
+    });
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get doAutoscroll() {
+    return this.#data.doAutoscroll;
+  }
+
+  /**
+   * @param {Boolean} value
+   */
   set isOutOfCharacter(value) {
     return this.setEvent("isOutOfCharacter", () => {
-      this.#_data.isOutOfCharacter = value;
+      this.#data.isOutOfCharacter = value;
     });
   }
 
+  /**
+   * @returns {Boolean}
+   */
   get isOutOfCharacter() {
-    return this.#_data.isOutOfCharacter;
+    return this.#data.isOutOfCharacter;
+  }
+
+  /**
+   * @param {String} value
+   */
+  set previewName(value) {
+    return this.setEvent("previewName", () => {
+      this.#data.previewName = value;
+    });
+  }
+
+  /**
+   * @returns {String}
+   */
+  get previewName() {
+    return this.#data.previewName;
   }
 }
 
+var lastRun = [];
+var lastFocused = -1;
+
 /**
+ *
+ * @param {HTMLElement} container
+ * @param {HTMLElement} child
+ */
+const scrollTo = (container, child) => {
+  if (!container || !child) return;
+  container.scrollTop = child.offsetTop - 12;
+  child.classList.add("focused");
+};
+
+/**
+ * Populates the preview element with formatted chat messages. Formats them according to:
+ * - Whether or not they are over the byte limit
+ * - Accordingly for the chat prefix used
+ * - Whether or not they are a non-chat command
  *
  * @param {HTMLTextAreaElement} box
  * @param {HTMLOListElement} preview
@@ -190,18 +301,28 @@ class Settings {
  * @param {String} prefix
  */
 const populatePreview = (box, preview, settings, prefix) => {
-  var list_objects = [];
+  /** @type {HTMLUListElement[]} */
+  let list_objects = [];
+
+  let thisRun = [];
 
   formatLines(box.value, settings, prefix).forEach((line, i, self) => {
-    var li = document.createElement("li");
-    var content = document.createElement("span");
-    var metadata = document.createElement("span");
+    let cls = getMessageClass(line);
+    let li = document.createElement("li");
+    let data = document.createElement("div");
+    let content = document.createElement("span");
+    let metadata = document.createElement("span");
 
-    content.textContent = line;
-    content.className = "content";
+    data.hidden = true;
+    data.textContent = line;
+    data.classList.add("content");
+
+    content.textContent = getLinePreview(line, cls, settings);
+    content.className = "chat-preview";
+    content.classList.add(cls);
+
     metadata.className = "metadata";
     metadata.textContent = `${charLen(line)}\n${i + 1}/${self.length}`;
-    content.classList.add(getMessageClass(line));
 
     if (charLen(line) > CHARACTER_LIMIT) {
       li.className = "overlimit";
@@ -214,15 +335,61 @@ const populatePreview = (box, preview, settings, prefix) => {
       }
 
       content.classList.add("copied");
-      navigator.clipboard.writeText(content.textContent);
+      navigator.clipboard.writeText(data.textContent);
     };
 
+    li.appendChild(data);
     li.appendChild(content);
     li.appendChild(metadata);
+
+    thisRun.push(line);
     list_objects.push(li);
   });
 
   preview.replaceChildren(...list_objects);
+
+  let lastRunLen = lastRun.length;
+  let thisRunLen = thisRun.length;
+
+  if (thisRunLen > 0) {
+    let scrolled = false;
+
+    for (let i = 0; i < thisRunLen; i++) {
+      /** @type {String} */
+      let line = thisRun[i];
+
+      /** @type {String?} */
+      let last = lastRun[i];
+
+      if (!last) {
+        scrolled = true;
+        scrollTo(box, list_objects[list_objects.length]);
+        lastFocused = i;
+        list_objects[i].classList.add("focused");
+
+        break;
+      }
+
+      last = last.replace(` (${i + 1}/${lastRunLen})`, "");
+      line = line.replace(` (${i + 1}/${thisRunLen})`, "");
+
+      if (last !== line) {
+        scrolled = true;
+        scrollTo(preview, list_objects[i]);
+        lastFocused = i;
+        list_objects[i].classList.add("focused");
+        break;
+      }
+    }
+
+    lastRun = thisRun;
+    if (!scrolled && lastFocused >= 0) {
+      if (list_objects[lastFocused]) {
+        scrollTo(preview, list_objects[lastFocused]);
+        list_objects[lastFocused].classList.add("focused");
+      }
+    }
+  }
 };
 
 /**
@@ -372,22 +539,6 @@ const processLine = (line, settings, prefix, singular) => {
     }
 
     results[on] += word + " ";
-
-    // If the next word exists, peek at its length, and if its length would send the next
-    // line over the limit, we split it up here.
-    if (
-      words[i + 1] &&
-      CHARACTER_LIMIT < thisLineLength + charLen(words[i + 1])
-    ) {
-      results[on] = finishLine(results[on]);
-      results[++on] = "";
-
-      if (!isSplit) {
-        isSplit = true;
-        totalOffset += 2;
-        prefix = `${prefix} |`;
-      }
-    }
   });
 
   results[on] = finishLine(results[on]);
@@ -439,17 +590,36 @@ const padSettings = new Settings("padSettings", {
   isOutOfCharacter: false,
   doSpellcheck: true,
   doEmConvert: true,
+  doAutoscroll: true,
+  previewName: "Firstname Lastname",
 });
 
 const initialize = () => {
   var timeoutID = null;
 
   const staticElements = {
+    ////////////////
+    // Scratchpad //
+    ////////////////
+
     /** @type {HTMLTextAreaElement} */
     textBox: document.querySelector("#textbox"),
 
     /** @type {HTMLUListElement} */
     previewBox: document.querySelector("#preview"),
+
+    /** @type {HTMLLinkElement} */
+    saveLink: document.querySelector("#save a"),
+
+    /** @type {HTMLLinkElement} */
+    openLink: document.querySelector("#open a"),
+
+    /** @type {HTMLLinkElement} */
+    openInput: document.querySelector("#open input"),
+
+    //////////////
+    // Settings //
+    //////////////
 
     /** @type {HTMLInputElement} */
     spellcheckCheckbox: document.querySelector("#spellcheck"),
@@ -466,43 +636,44 @@ const initialize = () => {
     /** @type {HTMLInputElement} */
     customChatInput: document.querySelector("#customchat-input"),
 
+    /** @type {HTMLInputElement} */
+    autoscrollCheckbox: document.querySelector("#set-autoscroll"),
+
+    /** @type {HTMLInputElement} */
+    previewNameInput: document.querySelector("#set-preview-name"),
+
+    ////////////
+    // Modals //
+    ////////////
+
     /** @type {HTMLLinkElement} */
     helpLink: document.querySelector("#help-icon"),
-
-    /** @type {HTMLLinkElement} */
-    saveLink: document.querySelector("#save a"),
-
-    /** @type {HTMLLinkElement} */
-    openLink: document.querySelector("#open a"),
-
-    /** @type {HTMLLinkElement} */
-    openInput: document.querySelector("#open input"),
   };
 
   let allTruthy = all(staticElements);
   if (!allTruthy[0])
     throw `Cannot load, missing required elements: ${allTruthy[1]}`;
 
-  /** @type {HTMLPreElement} */
-  const previewbox = document.querySelector("#preview");
-
   staticElements.textBox.value = localStorage.getItem(STORAGE_NAME) || "";
   staticElements.textBox.spellcheck = padSettings.doSpellcheck;
   staticElements.spellcheckCheckbox.checked = padSettings.doSpellcheck;
   staticElements.emDashCheckbox.checked = padSettings.doEmConvert;
   staticElements.oocCheckbox.checked = padSettings.isOutOfCharacter;
+  staticElements.previewNameInput.value = padSettings.previewName;
+  staticElements.autoscrollCheckbox.checked = padSettings.doAutoscroll;
 
   padSettings.addSetHandler("doSpellcheck", (value) => {
     staticElements.textBox.spellcheck = value;
   });
 
+  makeModal("settings");
   makeModal("about");
   makeModal("help");
 
   const doUpdate = () => {
     return populatePreview(
       staticElements.textBox,
-      previewbox,
+      staticElements.previewBox,
       padSettings,
       getChatPrefix(),
     );
@@ -609,6 +780,15 @@ const initialize = () => {
 
   staticElements.oocCheckbox.onchange = function () {
     padSettings.isOutOfCharacter = this.checked;
+    doUpdate();
+  };
+
+  staticElements.autoscrollCheckbox.onchange = function () {
+    padSettings.doAutoscroll = this.checked;
+  };
+
+  staticElements.previewNameInput.onchange = function () {
+    padSettings.previewName = this.value;
     doUpdate();
   };
 
