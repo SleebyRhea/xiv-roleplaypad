@@ -362,7 +362,8 @@ const populatePreview = (box, preview, settings, prefix) => {
 
       if (!last) {
         scrolled = true;
-        scrollTo(box, list_objects[list_objects.length]);
+        if (settings.doAutoscroll)
+          scrollTo(box, list_objects[list_objects.length]);
         lastFocused = i;
         list_objects[i].classList.add("focused");
 
@@ -374,7 +375,7 @@ const populatePreview = (box, preview, settings, prefix) => {
 
       if (last !== line) {
         scrolled = true;
-        scrollTo(preview, list_objects[i]);
+        if (settings.doAutoscroll) scrollTo(preview, list_objects[i]);
         lastFocused = i;
         list_objects[i].classList.add("focused");
         break;
@@ -384,7 +385,7 @@ const populatePreview = (box, preview, settings, prefix) => {
     lastRun = thisRun;
     if (!scrolled && lastFocused >= 0) {
       if (list_objects[lastFocused]) {
-        scrollTo(preview, list_objects[lastFocused]);
+        if (settings.doAutoscroll) scrollTo(preview, list_objects[lastFocused]);
         list_objects[lastFocused].classList.add("focused");
       }
     }
