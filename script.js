@@ -285,8 +285,7 @@ var lastFocused = -1;
  */
 const scrollTo = (container, child) => {
   if (!container || !child) return;
-  container.scrollTop = child.offsetTop - 12;
-  child.classList.add("focused");
+  child.scrollIntoView();
 };
 
 /**
