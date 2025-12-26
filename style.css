@@ -335,7 +335,7 @@ dialog {
   }
 }
 
-#settings {
+#settings-page {
   & .setting-container {
     display: flex;
     flex-direction: column;

@@ -78,22 +78,22 @@
           <span class="checkbox"></span>
         </label>
 
-        <a class="navbar-icon" href="#" title="Settings" id="settings-icon">☰</a>
+        <a class="navbar-icon" href="#" title="Settings" id="mainmenu-icon">☰</a>
       </span>
     </nav>
 
-    <dialog id="settings">
+    <dialog id="mainmenu">
       <div class="popup-modal">
-        <div class="modal-menu">
-          <a class="option" href="#" title="Settings" id="settings-icon">Settings</a><hr/>
-          <a class="option" href="#" title="About" id="about-icon">About</a><hr/>
-          <a class="option" href="#" title="Help" id="help-icon">Help</a><hr/>
+        <div id="mainmenu-nav" class="modal-menu">
+          <a class="option" for="settings-page" href="#">Settings</a><hr/>
+          <a class="option" for="about-page" href="#">About</a><hr/>
+          <a class="option" for="help-page" href="#">Help</a><hr/>
         </div>
 
         <span class="separater"></span>
 
         <!-- SETTINGS -->
-        <div class="menu-content">
+        <div id="settings-page" class="menu-content">
           <h2>Settings</h2>
 
           <span class="setting-container">
@@ -125,7 +125,7 @@
         </div>
 
         <!-- HELP -->
-        <div class="menu-content" hidden>
+        <div id="help-page" class="menu-content" hidden>
           <h2>Help</h2>
           <p>Simply type in the textbox box at the bottom, and go.</p>
           <p>
@@ -139,7 +139,7 @@
         </div>
 
         <!-- ABOUT -->
-        <div class="menu-content" hidden>
+        <div id="about-page" class="menu-content" hidden>
           <h2>XIV Roleplaypad</h2>
 
           <p>
