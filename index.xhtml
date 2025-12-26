@@ -60,82 +60,136 @@
           <a href="#">open</a>
         </span>
 
-        <span id="save" hidden="">
+        <span class="navitem" id="save" hidden="">
           <input id="filename" placeholder="padContent.txt" />
           <a href="#">save</a>
         </span>
 
-        <input type="checkbox" id="ooc" />
-        <label for="ooc">((OOC))</label> |
+        <label class="navitem" for="ooc">
+          OOC
+          <input type="checkbox" id="ooc" />
+          <span class="checkbox"></span>
+        </label>
 
-        <input type="checkbox" id="spellcheck" />
-        <label for="spellcheck">Spellcheck</label> |
+        <label class="navitem" for="spellcheck">
+          Spellcheck
+          <input type="checkbox" id="spellcheck" />
+          <span class="checkbox"></span>
+        </label>
 
         <a class="navbar-icon" href="#" title="Shortcuts" id="help-icon">Ⓗ</a>
         <a class="navbar-icon" href="#" title="About" id="about-icon">ⓘ</a>
-        <a class="navbar-icon" href="#" title="About" id="settings-icon">☰</a>
+        <a class="navbar-icon" href="#" title="Settings" id="settings-icon">☰</a>
       </span>
     </nav>
 
     <dialog id="about">
-      <h2>XIV Roleplaypad</h2>
-      <p>
-        A reimplementation of the basic features found in
-        <a href="https://github.com/MythicPalette/Wordsmith-DalamudPlugin"
-          >Wordsmith</a
-        >
-      </p>
-      <p></p>
-      <p>
-        The source code is
-        <a href="https://github.com/SleebyRhea/xiv-roleplaypad"
-          >available on GitHub</a
-        >.
-      </p>
-      <form method="dialog"><button>close</button></form>
+      <div class="popup-modal">
+        <div class="modal-menu">
+          <a class="option" href="#" title="Settings" id="settings-icon">Settings</a><hr/>
+          <a class="option" href="#" title="About" id="about-icon">About</a><hr/>
+          <a class="option" href="#" title="Help" id="help-icon">Help</a><hr/>
+        </div>
+        <span class="separater"></span>
+        <div class="menu-content">
+          <h2>XIV Roleplaypad</h2>
+
+          <p>
+            A reimplementation of the basic features found in
+            <a href="https://github.com/MythicPalette/Wordsmith-DalamudPlugin">Wordsmith</a>
+          </p>
+          <p></p>
+          <p>
+            The source code is
+            <a href="https://github.com/SleebyRhea/xiv-roleplaypad"
+              >available on GitHub</a
+            >.
+          </p>
+          <form method="dialog"><button>close</button></form>
+        </div>
+      </div>
     </dialog>
 
     <dialog id="help">
-      <h2>Help</h2>
-      <p>Simply type in the textbox box at the bottom, and go.</p>
-      <p>
-        Clicking the generated text will copy it, highlighting it green. Click
-        again - or simply type - to unhighlight.
-      </p>
-      <h3>Keyboard Shortcuts</h3>
-      <p><code>Ctrl-s</code>: Save to a file</p>
-      <p><code>Ctrl-o</code>: Open a file</p>
-      <p><code>Ctrl-/</code>: Open this help dialog</p>
-      <form method="dialog"><button>close</button></form>
+      <div class="popup-modal">
+        <div class="modal-menu">
+          <a class="option" href="#" title="Settings" id="settings-icon">Settings</a><hr/>
+          <a class="option" href="#" title="About" id="about-icon">About</a><hr/>
+          <a class="option" href="#" title="Help" id="help-icon">Help</a><hr/>
+        </div>
+        <span class="separater"></span>
+        <div class="menu-content">
+          <h2>Help</h2>
+          <p>Simply type in the textbox box at the bottom, and go.</p>
+          <p>
+            Clicking the generated text will copy it, highlighting it green. Click
+            again - or simply type - to unhighlight.
+          </p>
+          <h3>Keyboard Shortcuts</h3>
+          <p><code>Ctrl-s</code>: Save to a file</p>
+          <p><code>Ctrl-o</code>: Open a file</p>
+          <p><code>Ctrl-/</code>: Open this help dialog</p>
+          <form method="dialog"><button>close</button></form>
+        </div>
+      </div>
     </dialog>
     
     <dialog id="changelog">
-      <h2>Changelog</h2>
-      <form method="dialog"><button>close</button></form>
+      <div class="popup-modal">
+        <div class="modal-menu">
+          <a class="option" href="#" title="Settings" id="settings-icon">Settings</a><hr/>
+          <a class="option" href="#" title="About" id="about-icon">About</a><hr/>
+          <a class="option" href="#" title="Help" id="help-icon">Help</a><hr/>
+        </div>
+        <span class="separater"></span>
+        <div class="menu-content">
+          <h2>Changelog</h2>
+          <form method="dialog"><button>close</button></form>
+        </div>
+      </div>
     </dialog>
 
     <dialog id="settings">
-      <h2>Additional Settings</h2>
+      <div class="popup-modal">
+        <div class="modal-menu">
+          <a class="option" href="#" title="Settings" id="settings-icon">Settings</a><hr/>
+          <a class="option" href="#" title="About" id="about-icon">About</a><hr/>
+          <a class="option" href="#" title="Help" id="help-icon">Help</a><hr/>
+        </div>
+        <span class="separater"></span>
+        <div class="menu-content">
+          <h2>Settings</h2>
 
-      <span class="setting-container">
-        <label class="setting-label" for="set-preview-name">Preview Name</label>
-        <input class="setting-input" id="set-preview-name" placeholder="Firstname Lastname" />
-      </span>
+          <span class="setting-container">
+            <label class="setting-name" for="set-preview-name">Preview Name</label>
+            <input class="setting-input" id="set-preview-name" placeholder="Firstname Lastname" />
+          </span>
 
-      <hr/>
+          <hr/>
 
-      <span class="setting-container">
-        <label class="setting-label" for="set-autoscroll">Autoscrolling</label>
-        <span class="setting-description">Preview will scroll to input <input class="setting-input" id="set-autoscroll" type="checkbox" value="Autoscroll" /></span>
-      </span>
+          <span class="setting-container">
+            <span class="setting-name">Autoscrolling</span>
+            <label class="setting-description" for="set-autoscroll">
+              Scroll preview to latest changes
+              <input type="checkbox" id="set-autoscroll" class="setting-input button"  value="Autoscroll" />
+              <span class="checkbox"></span>
+            </label>
+          </span>
 
-      <span class="setting-container">
-        <label class="setting-label" for="emdash">Emdash Conversion</label>
-        <span class="setting-description">Convert -- inputs to — <input type="checkbox" id="emdash" /></span>
-      </span>
-      
-      <br/>
-      <form method="dialog"><button>close</button></form>
+          <span class="setting-container">
+            <span class="setting-name">Emdash Conversion</span>
+            <label class="setting-description" for="emdash">
+              Convert -- inputs to — 
+              <input type="checkbox" id="emdash" />
+              <span class="checkbox"></span>
+            </label>
+          </span>
+          
+          <br/>
+          <form method="dialog"><button>close</button></form>
+        </div>
+      </div>
+
     </dialog>
 
     <script src="./script.js"></script>
