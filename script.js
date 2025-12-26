@@ -551,27 +551,50 @@ const processLine = (line, settings, prefix, singular) => {
 /**
  * With a name, find an element on the DOM and assign it an onclick
  * @param {String} name
- * @param {(HTMLDialogElement)=>void} onclick
+ * @param {String} defaultPage
  */
-const makeModal = (name, onclick) => {
+const makeMenu = (name, defaultPage) => {
   /** @type {HTMLDialogElement} */
-  var modal = document.querySelector(`#${name}`);
-  var icon = document.querySelector(`#${name}-icon`);
+  let modal = document.querySelector(`#${name}`);
+  let icon = document.querySelector(`#${name}-icon`);
+
+  let menus = {};
+  let selected = "";
 
   if (!modal || !icon) {
-    console.error(`makeModal: Missing either #${name} or ${name}-icon Element`);
+    console.error(`makeMenu: Missing either #${name} or ${name}-icon Element`);
     return;
   }
 
-  if (!onclick) {
-    onclick = (m) => {
-      return m.showModal();
-    };
-  }
+  /**
+   * @param {String} pageName
+   */
+  let setPage = (pageName) => {
+    if (selected === pageName) return;
 
-  icon.onclick = (e) => {
-    return onclick(modal, e);
+    selected = pageName;
+    menus[pageName].hidden = false;
+
+    for (let name in menus) {
+      if (name !== pageName) menus[name].hidden = true;
+    }
   };
+
+  icon.onclick = () => {
+    setPage(defaultPage);
+    return modal.showModal();
+  };
+
+  modal.querySelectorAll(`.option[for]`)?.forEach((option) => {
+    let forMenu = option.getAttribute("for");
+    if (!forMenu || forMenu === "") return;
+
+    menus[forMenu] = modal.querySelector(`#${forMenu}`);
+
+    option.onclick = () => {
+      setPage(forMenu);
+    };
+  });
 };
 
 const getChatPrefix = () => {
@@ -654,8 +677,6 @@ const initialize = () => {
   staticElements.oocCheckbox.checked = padSettings.isOutOfCharacter;
   staticElements.previewNameInput.value = padSettings.previewName;
   staticElements.autoscrollCheckbox.checked = padSettings.doAutoscroll;
-
-  makeModal("settings");
 
   const doUpdate = () => {
     return populatePreview(
@@ -790,6 +811,7 @@ const initialize = () => {
     padSettings.save();
   };
 
+  makeMenu("mainmenu", "settings-page");
   doUpdate();
 };
 
