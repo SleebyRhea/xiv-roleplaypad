@@ -204,7 +204,6 @@ body {
     width: 100%;
     padding: 1em;
     overflow-y: scroll;
-    /* background-color: #333; */
     background-color: var(--p_dark);
     color: white;
   }
