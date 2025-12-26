@@ -641,13 +641,6 @@ const initialize = () => {
 
     /** @type {HTMLInputElement} */
     previewNameInput: document.querySelector("#set-preview-name"),
-
-    ////////////
-    // Modals //
-    ////////////
-
-    /** @type {HTMLLinkElement} */
-    helpLink: document.querySelector("#help-icon"),
   };
 
   let allTruthy = all(staticElements);
@@ -663,8 +656,6 @@ const initialize = () => {
   staticElements.autoscrollCheckbox.checked = padSettings.doAutoscroll;
 
   makeModal("settings");
-  makeModal("about");
-  makeModal("help");
 
   const doUpdate = () => {
     return populatePreview(
