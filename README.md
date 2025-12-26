@@ -1,4 +1,4 @@
-# This project has been forked from [browserpad](https://github.com/browserpad/browserpad)
+# This project, though forked from [browserpad](https://github.com/browserpad/browserpad), does not share the same goals. README is incoming.
 
 # Browserpad
 
