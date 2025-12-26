@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta charset="utf-8" />
@@ -77,77 +78,9 @@
           <span class="checkbox"></span>
         </label>
 
-        <a class="navbar-icon" href="#" title="Shortcuts" id="help-icon">Ⓗ</a>
-        <a class="navbar-icon" href="#" title="About" id="about-icon">ⓘ</a>
         <a class="navbar-icon" href="#" title="Settings" id="settings-icon">☰</a>
       </span>
     </nav>
-
-    <dialog id="about">
-      <div class="popup-modal">
-        <div class="modal-menu">
-          <a class="option" href="#" title="Settings" id="settings-icon">Settings</a><hr/>
-          <a class="option" href="#" title="About" id="about-icon">About</a><hr/>
-          <a class="option" href="#" title="Help" id="help-icon">Help</a><hr/>
-        </div>
-        <span class="separater"></span>
-        <div class="menu-content">
-          <h2>XIV Roleplaypad</h2>
-
-          <p>
-            A reimplementation of the basic features found in
-            <a href="https://github.com/MythicPalette/Wordsmith-DalamudPlugin">Wordsmith</a>
-          </p>
-          <p></p>
-          <p>
-            The source code is
-            <a href="https://github.com/SleebyRhea/xiv-roleplaypad"
-              >available on GitHub</a
-            >.
-          </p>
-          <form method="dialog"><button>close</button></form>
-        </div>
-      </div>
-    </dialog>
-
-    <dialog id="help">
-      <div class="popup-modal">
-        <div class="modal-menu">
-          <a class="option" href="#" title="Settings" id="settings-icon">Settings</a><hr/>
-          <a class="option" href="#" title="About" id="about-icon">About</a><hr/>
-          <a class="option" href="#" title="Help" id="help-icon">Help</a><hr/>
-        </div>
-        <span class="separater"></span>
-        <div class="menu-content">
-          <h2>Help</h2>
-          <p>Simply type in the textbox box at the bottom, and go.</p>
-          <p>
-            Clicking the generated text will copy it, highlighting it green. Click
-            again - or simply type - to unhighlight.
-          </p>
-          <h3>Keyboard Shortcuts</h3>
-          <p><code>Ctrl-s</code>: Save to a file</p>
-          <p><code>Ctrl-o</code>: Open a file</p>
-          <p><code>Ctrl-/</code>: Open this help dialog</p>
-          <form method="dialog"><button>close</button></form>
-        </div>
-      </div>
-    </dialog>
-    
-    <dialog id="changelog">
-      <div class="popup-modal">
-        <div class="modal-menu">
-          <a class="option" href="#" title="Settings" id="settings-icon">Settings</a><hr/>
-          <a class="option" href="#" title="About" id="about-icon">About</a><hr/>
-          <a class="option" href="#" title="Help" id="help-icon">Help</a><hr/>
-        </div>
-        <span class="separater"></span>
-        <div class="menu-content">
-          <h2>Changelog</h2>
-          <form method="dialog"><button>close</button></form>
-        </div>
-      </div>
-    </dialog>
 
     <dialog id="settings">
       <div class="popup-modal">
@@ -156,7 +89,10 @@
           <a class="option" href="#" title="About" id="about-icon">About</a><hr/>
           <a class="option" href="#" title="Help" id="help-icon">Help</a><hr/>
         </div>
+
         <span class="separater"></span>
+
+        <!-- SETTINGS -->
         <div class="menu-content">
           <h2>Settings</h2>
 
@@ -186,10 +122,47 @@
           </span>
           
           <br/>
-          <form method="dialog"><button>close</button></form>
         </div>
-      </div>
 
+        <!-- HELP -->
+        <div class="menu-content" hidden>
+          <h2>Help</h2>
+          <p>Simply type in the textbox box at the bottom, and go.</p>
+          <p>
+            Clicking the generated text will copy it, highlighting it green. Click
+            again - or simply type - to unhighlight.
+          </p>
+          <h3>Keyboard Shortcuts</h3>
+          <p><code>Ctrl-s</code>: Save to a file</p>
+          <p><code>Ctrl-o</code>: Open a file</p>
+          <p><code>Ctrl-/</code>: Open this help dialog</p>
+          
+        </div>
+
+        <!-- ABOUT -->
+        <div class="menu-content" hidden>
+          <h2>XIV Roleplaypad</h2>
+
+          <p>
+            A reimplementation of the basic features found in
+            <a href="https://github.com/MythicPalette/Wordsmith-DalamudPlugin">Wordsmith</a>
+          </p>
+          <p></p>
+          <p>
+            The source code is
+            <a href="https://github.com/SleebyRhea/xiv-roleplaypad"
+              >available on GitHub</a
+            >.
+          </p>
+          
+          <hr/>
+
+          <h2>Changelog</h2>
+          <p>TBD</p>
+          
+        </div>
+        <form method="dialog"><button>close</button></form>
+      </div>
     </dialog>
 
     <script src="./script.js"></script>
