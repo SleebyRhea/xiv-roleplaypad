@@ -302,6 +302,15 @@ dialog {
     padding: 0;
     margin: 0;
   }
+
+  & .close {
+    position: absolute;
+    right: 1.3rem;
+    top: 1rem;
+
+    margin: 0;
+    padding: 0;
+  }
 }
 
 .menu-content {
