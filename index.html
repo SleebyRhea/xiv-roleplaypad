@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta charset="utf-8" />
@@ -14,7 +14,6 @@
     <!-- <script type="text/javascript" src="https://livejs.com/live.js#html,css,js"></script> -->
   </head>
   <body>
-
     <div id="editor">
       <ul id="preview"></ul>
       <textarea
@@ -26,30 +25,50 @@
 
     <nav>
       <span id="chatselector">
+        <label class="radio-container" for="saychat">
+          <input
+            type="radio"
+            name="chatype"
+            id="saychat"
+            value="/s"
+            checked="checked"
+          />
+          <span class="radio"></span>
+          /s
+        </label>
+
+        <label class="radio-container" for="partychat">
+          <input type="radio" name="chatype" id="partychat" value="/p" />
+          <span class="radio"></span>
+          /p
+        </label>
+
+        <label class="radio-container" for="yellchat">
+          <input type="radio" name="chatype" id="yellchat" value="/y" />
+          <span class="radio"></span>
+          /y
+        </label>
+
+        <label class="radio-container" for="shoutchat">
+          <input type="radio" name="chatype" id="shoutchat" value="/sh" />
+          <span class="radio"></span>
+          /sh
+        </label>
+
+        <label class="radio-container" for="emotechat">
+          <input type="radio" name="chatype" id="emotechat" value="/sh" />
+          <span class="radio"></span>
+          /em
+        </label>
+
+        <label class="radio-container" for="customchat">
+          <input type="radio" name="chatype" id="customchat" value="" />
+          <span class="radio"></span>
+          custom
+        </label>
+
         <input
-          type="radio"
-          name="chatype"
-          id="saychat"
-          value="/s"
-          checked="checked"
-        />
-        <label for="say">/s</label>
-
-        <input type="radio" name="chatype" id="partychat" value="/p" />
-        <label for="party">/p</label>
-
-        <input type="radio" name="chatype" id="yellchat" value="/y" />
-        <label for="yell">/y</label>
-
-        <input type="radio" name="chatype" id="shoutchat" value="/sh" />
-        <label for="shout">/sh</label>
-
-        <input type="radio" name="chatype" id="emotechat" value="/em" />
-        <label for="emote">/em</label>
-
-        <input type="radio" name="chatype" id="customchat" value="" />
-        <label for="custom">custom:</label>
-        <input
+          class="textinput"
           id="customchat-input"
           placeholder="/tell first last@server"
         />
@@ -78,36 +97,52 @@
           <span class="checkbox"></span>
         </label>
 
-        <a class="navbar-icon" href="#" title="Settings" id="mainmenu-icon">☰</a>
+        <a class="navbar-icon" href="#" title="Settings" id="mainmenu-icon"
+          >☰</a
+        >
       </span>
     </nav>
 
     <dialog id="mainmenu">
       <div class="popup-modal">
         <div id="mainmenu-nav" class="modal-menu">
-          <a class="option" for="settings-page" href="#">Settings</a><hr/>
-          <a class="option" for="about-page" href="#">About</a><hr/>
-          <a class="option" for="help-page" href="#">Help</a><hr/>
+          <span class="option" for="settings-page">Settings</span>
+          <hr />
+          <span class="option" for="about-page">About</span>
+          <hr />
+          <span class="option" for="help-page">Help</span>
+          <hr />
         </div>
 
         <span class="separater"></span>
 
         <!-- SETTINGS -->
-        <div id="settings-page" class="menu-content">
+        <div id="settings-page" class="page-content">
           <h2>Settings</h2>
 
           <span class="setting-container">
-            <label class="setting-name" for="set-preview-name">Preview Name</label>
-            <input class="setting-input" id="set-preview-name" placeholder="Firstname Lastname" />
+            <label class="setting-name" for="set-preview-name"
+              >Preview Name</label
+            >
+            <input
+              class="setting-input textinput"
+              id="set-preview-name"
+              placeholder="Firstname Lastname"
+            />
           </span>
 
-          <hr/>
+          <hr />
 
           <span class="setting-container">
             <span class="setting-name">Autoscrolling</span>
             <label class="setting-description" for="set-autoscroll">
               Scroll preview to latest changes
-              <input type="checkbox" id="set-autoscroll" class="setting-input button"  value="Autoscroll" />
+              <input
+                type="checkbox"
+                id="set-autoscroll"
+                class="setting-input button"
+                value="Autoscroll"
+              />
               <span class="checkbox"></span>
             </label>
           </span>
@@ -115,23 +150,24 @@
           <span class="setting-container">
             <span class="setting-name">Emdash Conversion</span>
             <label class="setting-description" for="emdash">
-              Convert -- inputs to — 
+              Convert -- inputs to —
               <input type="checkbox" id="emdash" />
               <span class="checkbox"></span>
             </label>
           </span>
-          
-          <br/>
+
+          <br />
         </div>
 
         <!-- HELP -->
-        <div id="help-page" class="menu-content" hidden>
+        <div id="help-page" class="page-content" hidden>
           <h2>Help</h2>
           <p>Simply type in the textbox box at the bottom, and go.</p>
           <p>
-            Clicking the generated text will copy it, highlighting it green. Click
-            again - or simply type - to unhighlight.
+            Clicking the generated text will copy it, highlighting it green.
+            Click again - or simply type - to unhighlight.
           </p>
+          <hr />
           <h3>Keyboard Shortcuts</h3>
           <p><code>Ctrl-s</code>: Save to a file</p>
           <p><code>Ctrl-o</code>: Open a file</p>
@@ -139,12 +175,14 @@
         </div>
 
         <!-- ABOUT -->
-        <div id="about-page" class="menu-content" hidden>
+        <div id="about-page" class="page-content" hidden>
           <h2>XIV Roleplaypad</h2>
 
           <p>
             A reimplementation of the basic features found in
-            <a href="https://github.com/MythicPalette/Wordsmith-DalamudPlugin">Wordsmith</a>
+            <a href="https://github.com/MythicPalette/Wordsmith-DalamudPlugin"
+              >Wordsmith</a
+            >
           </p>
           <p></p>
           <p>
@@ -153,14 +191,13 @@
               >available on GitHub</a
             >.
           </p>
-          
-          <hr/>
+
+          <hr />
 
           <h2>Changelog</h2>
-          <p>TBD</p>
-          
+          <p><i>Nothing to see here yet!</i></p>
         </div>
-        <form class="close" method="dialog"><button>x</button></form>
+        <span class="close"></span>
       </div>
     </dialog>
 

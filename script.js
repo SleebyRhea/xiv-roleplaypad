@@ -557,6 +557,7 @@ const makeMenu = (name, defaultPage) => {
   /** @type {HTMLDialogElement} */
   let modal = document.querySelector(`#${name}`);
   let icon = document.querySelector(`#${name}-icon`);
+  let close = modal.querySelector(".close");
 
   let menus = {};
   let selected = "";
@@ -585,7 +586,7 @@ const makeMenu = (name, defaultPage) => {
     return modal.showModal();
   };
 
-  modal.querySelectorAll(`.option[for]`)?.forEach((option) => {
+  modal.querySelectorAll(".option[for]")?.forEach((option) => {
     let forMenu = option.getAttribute("for");
     if (!forMenu || forMenu === "") return;
 
@@ -595,6 +596,13 @@ const makeMenu = (name, defaultPage) => {
       setPage(forMenu);
     };
   });
+
+  if (close)
+    modal.querySelector(".close").onclick = () => {
+      modal.close();
+    };
+
+  return modal;
 };
 
 const getChatPrefix = () => {
@@ -610,11 +618,11 @@ const getChatPrefix = () => {
 };
 
 const padSettings = new Settings("padSettings", {
+  previewName: "Firstname L.",
   isOutOfCharacter: false,
   doSpellcheck: true,
   doEmConvert: true,
   doAutoscroll: true,
-  previewName: "Firstname Lastname",
 });
 
 const initialize = () => {
@@ -664,6 +672,9 @@ const initialize = () => {
 
     /** @type {HTMLInputElement} */
     previewNameInput: document.querySelector("#set-preview-name"),
+
+    /** @type {HTMLDialogElement} */
+    mainMenu: makeMenu("mainmenu", "settings-page"),
   };
 
   let allTruthy = all(staticElements);
@@ -811,7 +822,6 @@ const initialize = () => {
     padSettings.save();
   };
 
-  makeMenu("mainmenu", "settings-page");
   doUpdate();
 };
 

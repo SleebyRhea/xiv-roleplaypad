@@ -22,8 +22,21 @@ html {
   height: 100%;
 }
 
+label:has(> input) {
+  cursor: pointer;
+}
+
 label input {
   display: none;
+}
+
+label span.radio {
+  height: 10px;
+  width: 10px;
+  border: 1px solid var(--p_shaded);
+  display: inline-block;
+  position: relative;
+  border-radius: 10px;
 }
 
 label span.checkbox {
@@ -34,7 +47,8 @@ label span.checkbox {
   position: relative;
 }
 
-[type="checkbox"]:checked + span:before {
+input[type="checkbox"]:checked + span:before,
+input[type="radio"]:checked + span:before {
   content: "\2714";
   position: absolute;
   top: -5px;
@@ -79,13 +93,11 @@ body {
       padding-bottom: 0.5rem;
       width: 100%;
       border-bottom: 1px solid var(--p_shaded);
-
       margin-right: 0;
       margin-left: 0;
     }
 
     & li.focused {
-      /* border-: 3px solid green; */
       & span.chat-preview {
         padding-left: 0.4rem;
       }
@@ -93,11 +105,9 @@ body {
 
     & li.focused:before {
       content: "";
-      border: 2px solid var(--p_lighter);
-      margin-left: 0.3rem;
+      border: 0.3rem solid var(--p_lighter);
       font-size: xx-large;
       align-content: center;
-      vertical-align: middle;
     }
 
     & span.content {
@@ -112,7 +122,6 @@ body {
       margin-right: 0;
       text-align: right;
       white-space: pre-wrap;
-      /* color: #666; */
       color: var(--p_lighter);
     }
 
@@ -174,13 +183,16 @@ body {
       color: red !important;
     }
 
-    & span.copied {
-      color: var(--p_contrast) !important;
-      /* font-weight: bold; */
-    }
+    li:has(> span.copied) {
+      background-color: var(--p_contrast);
 
-    & span.sending {
-      color: gray !important;
+      & span.copied {
+        color: var(--p_dark);
+      }
+
+      & span.metadata {
+        color: var(--p_dark);
+      }
     }
   }
 
@@ -226,6 +238,17 @@ nav {
   color: var(--p_deep);
   background-color: var(--p_bright);
   border-top: 1px solid var(--p_shaded);
+
+  & label.radio-container {
+    border-left: 1px solid var(--p_shaded);
+    padding-left: 0.5rem;
+    padding-right: 0.2rem;
+  }
+
+  & label.radio-container:first-child {
+    border: none;
+    padding-left: 0;
+  }
 
   & #controls {
     float: right;
@@ -283,11 +306,62 @@ dialog {
   background-color: var(--p_dark);
   color: var(--p_bright);
 
+  & span.close {
+    display: inline-block;
+    position: absolute;
+    right: 0.6rem;
+    top: 0.5rem;
+
+    border-radius: 100%;
+    height: 10px;
+    width: 10px;
+
+    border: 1px solid var(--p_bright);
+    background-color: var(--p_bright);
+  }
+
+  & span.close:hover {
+    background-color: var(--p_contrast);
+    border-color: var(--p_contrast);
+    cursor: pointer;
+  }
+
+  & .close {
+    color: var(--p_deep);
+    text-align: center;
+    font-family: monospace;
+    vertical-align: middle;
+    font-size: 85%;
+    line-height: 50%;
+
+    margin: 0 auto;
+    padding: 0;
+  }
+
   & .modal-menu {
     display: flex;
     flex-direction: column;
-    & .option {
-      margin: 0.3rem;
+    background-color: var(--p_lighter);
+    color: var(--p_dark);
+    text-align: right;
+
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    font-family:
+      "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+
+    & span.option {
+      padding: 0.3rem;
+      margin: 0;
+    }
+
+    & span.option:first-child {
+      border-top-left-radius: 10px;
+    }
+
+    & .option:hover {
+      background-color: var(--p_bright);
+      cursor: pointer;
     }
   }
 
@@ -303,35 +377,32 @@ dialog {
     margin: 0;
   }
 
-  & .close {
-    position: absolute;
-    right: 1.3rem;
-    top: 1rem;
-
-    margin: 0;
-    padding: 0;
-  }
-}
-
-.menu-content {
-  color: var(--p_contrast);
-  margin: 1rem;
-  width: 100%;
-
-  & h2 {
-    text-align: left;
+  & .page-content {
     color: var(--p_contrast);
-    margin-top: auto;
-  }
+    margin: 1rem;
+    width: 100%;
 
-  & form {
-    text-align: right;
-  }
+    & h2 {
+      text-align: left;
+      color: var(--p_contrast);
+      margin-top: auto;
+    }
 
-  & hr {
-    border: 1px solid var(--p_dim);
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
+    & form {
+      text-align: right;
+    }
+
+    & hr {
+      border: 1px solid var(--p_dim);
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    & a {
+      text-decoration: underline;
+      font-style: italic;
+      color: var(--p_contrast);
+    }
   }
 }
 
@@ -360,12 +431,6 @@ dialog {
       align-content: right;
       width: auto;
     }
-  }
-}
-
-#help {
-  & form {
-    text-align: right;
   }
 }
 
