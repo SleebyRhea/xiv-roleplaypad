@@ -81,19 +81,26 @@ body {
     left: 0;
 
     height: 60%;
-    box-sizing: border-box;
     width: 100%;
+
+    box-sizing: border-box;
+
     border: none;
     outline: none;
     resize: none;
     font-family: monospace;
     list-style-type: none;
+
     padding-right: 1rem;
     padding-left: 1rem;
-    overflow-wrap: break-word;
-    overflow-y: auto;
+    margin-bottom: 0;
 
     scrollbar-width: thin;
+    overflow-wrap: break-word;
+    overflow-y: auto;
+    margin: 0;
+    padding-top: 1rem;
+    /* padding-bottom: 1rem; */
 
     & li {
       display: inline-flex;
@@ -104,6 +111,15 @@ body {
       border-bottom: 1px solid var(--p_shaded);
       margin-right: 0;
       margin-left: 0;
+    }
+
+    & li:first-child {
+      margin-top: 0;
+      padding-top: 0;
+    }
+
+    & li:last-child {
+      border-bottom: none;
     }
 
     & li.focused {
@@ -209,7 +225,7 @@ body {
     position: fixed;
     bottom: 2rem;
     width: 100%;
-    height: calc(40% - 3rem);
+    height: calc(40% - 2rem);
     box-sizing: border-box;
     outline: none;
     resize: none;
