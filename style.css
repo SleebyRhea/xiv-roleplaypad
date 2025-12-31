@@ -70,21 +70,30 @@ body {
 #editor {
   height: 100%;
   width: 100%;
+  scrollbar-width: none;
+  overflow-x: hidden;
+  overflow-y: auto;
 
   & ul#preview,
   ol#preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+
     height: 60%;
     box-sizing: border-box;
     width: 100%;
     border: none;
     outline: none;
     resize: none;
-    overflow-y: scroll;
     font-family: monospace;
     list-style-type: none;
     padding-right: 1rem;
     padding-left: 1rem;
     overflow-wrap: break-word;
+    overflow-y: auto;
+
+    scrollbar-width: thin;
 
     & li {
       display: inline-flex;
@@ -218,6 +227,8 @@ body {
     overflow-y: scroll;
     background-color: var(--p_dark);
     color: white;
+    scrollbar-width: thin;
+    overflow-y: auto;
   }
 }
 
