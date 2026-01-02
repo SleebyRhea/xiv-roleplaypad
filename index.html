@@ -11,11 +11,86 @@
     eNgjiioQdeqsuakXl6tIIjBQAh+QQBZAADACwAAAAAEAAQAAACIIyPacLtvp5kcb5qG85iZ2+BkyiRV8BBaEqtrKkqslEAADs="
     />
     <link rel="stylesheet" type="text/css" href="./style.css" />
-    <!-- <script type="text/javascript" src="https://livejs.com/live.js#html,css,js"></script> -->
+    <script
+      type="text/javascript"
+      src="https://livejs.com/live.js#html,css,js"
+    ></script>
+    <style id="disable-chat-filtering">
+      #editor > #filewatch-container > ul#filewatch > li {
+        display: inline-block !important;
+      }
+    </style>
   </head>
   <body>
     <div id="editor">
       <ul id="preview"></ul>
+      <div id="filewatch-container" hidden>
+        <ul id="filewatch"></ul>
+        <span id="chat-scroll-indicator" hidden></span>
+        <span id="chat-filters">
+          <label for="enable-say">
+            Say
+            <input type="checkbox" id="enable-say" />
+            <span class="checkbox"></span>
+          </label>
+
+          <span class="seperator"></span>
+          <label for="enable-emotes">
+            Emote
+            <input type="checkbox" id="enable-emotes" />
+            <span class="checkbox"></span>
+          </label>
+
+          <span class="seperator"></span>
+          <label for="enable-party">
+            Party
+            <input type="checkbox" id="enable-party" />
+            <span class="checkbox"></span>
+          </label>
+
+          <span class="seperator"></span>
+          <label for="enable-tell">
+            Tell
+            <input type="checkbox" id="enable-tell" />
+            <span class="checkbox"></span>
+          </label>
+
+          <span class="seperator"></span>
+          <label for="enable-linkshell">
+            LS
+            <input type="checkbox" id="enable-linkshell" />
+            <span class="checkbox"></span>
+          </label>
+
+          <span class="seperator"></span>
+          <label for="enable-freecompany">
+            FC
+            <input type="checkbox" id="enable-freecompany" />
+            <span class="checkbox"></span>
+          </label>
+
+          <span class="spacer"></span>
+
+          <label title="Scroll to new messages" for="enable-chat-autoscroll">
+            Autoscroll
+            <input type="checkbox" id="enable-chat-autoscroll" checked="true" />
+            <span class="checkbox"></span>
+          </label>
+
+          <span class="seperator"></span>
+          <label title="Filter the chat" for="enable-filters">
+            Filters
+            <input type="checkbox" id="enable-filters" checked="true" />
+            <span class="checkbox"></span>
+          </label>
+
+          <span class="seperator"></span>
+          <a href="#" title="Clear All Filters" id="clearfilters-icon">✗</a>
+
+          <span class="seperator" hidden></span>
+          <a href="#" title="Other Filters" id="otherfilters-icon" hidden>⚙</a>
+        </span>
+      </div>
       <textarea
         id="textbox"
         autofocus="autofocus"
@@ -75,12 +150,7 @@
       </span>
 
       <span id="controls">
-        <span id="open" hidden="">
-          <input type="file" value="open" />
-          <a href="#">open</a>
-        </span>
-
-        <span class="navitem" id="save" hidden="">
+        <span class="navitem" id="save" hidden>
           <input id="filename" placeholder="padContent.txt" />
           <a href="#">save</a>
         </span>
@@ -97,6 +167,14 @@
           <span class="checkbox"></span>
         </label>
 
+        <a
+          class="navbar-icon unopened"
+          href="#"
+          title="Select Log"
+          id="followlog-icon"
+          hidden
+        ></a>
+
         <a class="navbar-icon" href="#" title="Settings" id="mainmenu-icon"
           >☰</a
         >
@@ -107,6 +185,8 @@
       <div class="popup-modal">
         <div id="mainmenu-nav" class="modal-menu">
           <span class="option" for="settings-page">Settings</span>
+          <hr />
+          <span class="option" for="filters-page">Filters</span>
           <hr />
           <span class="option" for="about-page">About</span>
           <hr />
@@ -197,10 +277,16 @@
           <h2>Changelog</h2>
           <p><i>Nothing to see here yet!</i></p>
         </div>
+        <div id="filters-page" class="page-content" hidden>
+          <h2>Chat Filters</h2>
+          <p>
+            Nothing to see here yet, but this will be where more fine tuned chat
+            filtering will live
+          </p>
+        </div>
         <span class="close"></span>
       </div>
     </dialog>
-
-    <script src="./script.js"></script>
   </body>
+  <script src="./script.js"></script>
 </html>

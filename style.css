@@ -15,6 +15,9 @@
   --chat_emote: #bafff0;
   --chat_linkshell: #d4ff7d;
   --chat_freecompany: #abdbe5;
+
+  --border: var(--p_bright);
+  --dim-border: var(--p_shaded);
 }
 
 html {
@@ -73,49 +76,161 @@ body {
   scrollbar-width: none;
   overflow-x: hidden;
   overflow-y: auto;
+  display: inline-flex;
+  margin: 0;
 
   & ul#preview,
-  ol#preview {
-    position: absolute;
-    top: 0;
-    left: 0;
-
+  ul#filewatch {
     height: 60%;
-    width: 100%;
-
-    box-sizing: border-box;
-
     border: none;
     outline: none;
     resize: none;
     font-family: monospace;
     list-style-type: none;
+    box-sizing: border-box;
+    scrollbar-width: none;
+    overflow-wrap: break-word;
+    overflow-y: auto;
+    margin: 0;
+    padding-top: 0.5rem;
+  }
+
+  & div#filewatch-container {
+    flex-direction: column;
+    margin: inherit;
+    padding: inherit;
+    width: 60%;
+    height: 60%;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    justify-content: space-between;
+    box-sizing: border-box;
+    min-width: 600px;
+
+    font-family:
+      "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+
+    & #chat-scroll-indicator {
+      position: absolute;
+      top: auto;
+      right: 2px;
+      bottom: calc(40% + 3em);
+      z-index: 9999;
+      cursor: pointer;
+    }
+
+    & #chat-scroll-indicator::after {
+      content: "↴";
+    }
+
+    & #chat-filters {
+      display: flex;
+      justify-content: space-evenly;
+      user-select: none;
+      font-size: medium;
+
+      margin-top: auto;
+      margin-bottom: 0;
+
+      border-top: 4px solid var(--border);
+      background-color: var(--border);
+      color: var(--p_deep);
+
+      & label {
+        padding-left: 0.3rem;
+        padding-right: 0.3rem;
+      }
+
+      & .seperator {
+        margin: 0;
+        padding: 0;
+      }
+
+      & .seperator::after {
+        content: "";
+        padding: 0;
+        padding-right: 2px;
+        border-right: 1px solid var(--p_dark);
+      }
+
+      & a {
+        float: right;
+        color: var(--p_dark);
+        text-decoration: none;
+        padding-left: 0.3rem;
+        padding-right: 0.3rem;
+      }
+
+      & .spacer {
+        margin-left: auto;
+        margin-right: 0;
+      }
+    }
+  }
+
+  & ul#filewatch {
+    border-left: 3px solid var(--border);
+    top: 0;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    font-size: 80%;
+
+    padding-right: 1rem;
+    padding-left: 1rem;
+    margin-bottom: 0;
+    margin: 0;
+
+    & li {
+      display: inline-block;
+
+      & a {
+        background-color: var(--p_shaded);
+        cursor: pointer;
+        user-select: none;
+        /* line-height: 1.2rem; */
+        border-radius: 6px;
+        padding-left: 5px;
+        padding-right: 5px;
+        vertical-align: middle;
+        text-shadow: 3px 3px 3px var(--p_deep);
+
+        border: 1px solid var(--p_shaded);
+      }
+
+      & a:hover {
+        text-decoration: 3px solid red line-through;
+      }
+
+      span:before {
+        content: " ";
+      }
+    }
+  }
+
+  & ul#preview {
+    width: 100%;
 
     padding-right: 1rem;
     padding-left: 1rem;
     margin-bottom: 0;
 
-    scrollbar-width: thin;
+    scrollbar-width: none;
     overflow-wrap: break-word;
     overflow-y: auto;
     margin: 0;
-    padding-top: 1rem;
-    /* padding-bottom: 1rem; */
+    padding-top: 0.5rem;
+  }
 
+  & ul {
     & li {
       display: inline-flex;
-      /* padding: 10px; */
       padding-top: 0.5rem;
       padding-bottom: 0.5rem;
       width: 100%;
-      border-bottom: 1px solid var(--p_shaded);
+      border-bottom: 1px solid var(--dim-border);
       margin-right: 0;
       margin-left: 0;
-    }
-
-    & li:first-child {
-      margin-top: 0;
-      padding-top: 0;
     }
 
     & li:last-child {
@@ -150,39 +265,39 @@ body {
       color: var(--p_lighter);
     }
 
-    & span.party {
+    & .party {
       color: var(--chat_party);
     }
 
-    & span.say {
+    & .say {
       color: var(--chat_say);
     }
 
-    & span.yell {
+    & .yell {
       color: var(--chat_yell);
     }
 
-    & span.shout {
+    & .shout {
       color: var(--chat_shout);
     }
 
-    & span.emote {
+    & .emote {
       color: var(--chat_emote);
     }
 
-    & span.tell {
+    & .tell {
       color: var(--chat_tell);
     }
 
-    & span.freecompany {
+    & .freecompany {
       color: var(--chat_freecompany);
     }
 
-    & span.linkshell {
+    & .linkshell {
       color: var(--chat_linkshell);
     }
 
-    & span.command {
+    & .command {
       color: var(--chat_say);
     }
 
@@ -208,7 +323,7 @@ body {
       color: red !important;
     }
 
-    li:has(> span.copied) {
+    & li:has(> span.copied) {
       background-color: var(--p_contrast);
 
       & span.copied {
@@ -234,7 +349,7 @@ body {
   }
 
   #textbox {
-    border: 3px solid var(--p_shaded);
+    border: 3px solid var(--border);
     border-left: none;
     border-right: none;
     border-bottom: none;
@@ -243,7 +358,7 @@ body {
     overflow-y: scroll;
     background-color: var(--p_dark);
     color: white;
-    scrollbar-width: thin;
+    scrollbar-width: none;
     overflow-y: auto;
   }
 }
@@ -251,16 +366,16 @@ body {
 nav {
   position: fixed;
   box-sizing: border-box;
+  user-select: none;
 
   left: 0;
   bottom: 0;
-  /* line-height: 2rem; */
 
   width: 100%;
   height: 2rem;
   padding: 0.3rem 0.5em;
 
-  font-family: sans-serif;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
 
   color: var(--p_deep);
   background-color: var(--p_bright);
@@ -289,6 +404,14 @@ nav {
 
   & a {
     color: var(--p_deep);
+  }
+
+  #followlog-icon.unopened:before {
+    content: "⟲";
+  }
+
+  #followlog-icon.opened:before {
+    content: "\2718";
   }
 }
 
@@ -327,8 +450,8 @@ dialog {
   margin: 0;
   padding: 0;
 
-  border: 2px solid var(--p_dim);
-  border-radius: 10px;
+  border: 2px solid var(--p_lighter);
+  border-radius: 1rem;
 
   background-color: var(--p_dark);
   color: var(--p_bright);
@@ -336,8 +459,8 @@ dialog {
   & span.close {
     display: inline-block;
     position: absolute;
-    right: 0.6rem;
-    top: 0.5rem;
+    right: 1rem;
+    top: 0.75rem;
 
     border-radius: 100%;
     height: 10px;
@@ -356,10 +479,7 @@ dialog {
   & .close {
     color: var(--p_deep);
     text-align: center;
-    font-family: monospace;
     vertical-align: middle;
-    font-size: 85%;
-    line-height: 50%;
 
     margin: 0 auto;
     padding: 0;
@@ -371,6 +491,7 @@ dialog {
     background-color: var(--p_lighter);
     color: var(--p_dark);
     text-align: right;
+    user-select: none;
 
     border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
