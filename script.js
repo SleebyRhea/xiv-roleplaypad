@@ -805,14 +805,6 @@ const initialize = () => {
   if (!allTruthy[0])
     throw `Cannot load, missing required elements: ${allTruthy[1]}`;
 
-  staticElements.textBox.value = localStorage.getItem(STORAGE_NAME) || "";
-  staticElements.textBox.spellcheck = padSettings.doSpellcheck;
-  staticElements.spellcheckCheckbox.checked = padSettings.doSpellcheck;
-  staticElements.emDashCheckbox.checked = padSettings.doEmConvert;
-  staticElements.oocCheckbox.checked = padSettings.isOutOfCharacter;
-  staticElements.previewNameInput.value = padSettings.previewName;
-  staticElements.autoscrollCheckbox.checked = padSettings.doAutoscroll;
-
   const doUpdate = () => {
     return populatePreview(
       staticElements.textBox,
@@ -821,6 +813,70 @@ const initialize = () => {
       getChatPrefix(),
     );
   };
+
+  staticElements.textBox.value = localStorage.getItem(STORAGE_NAME) || "";
+  staticElements.previewNameInput.value = padSettings.previewName;
+
+  // Scratchpad Settings
+  padSettings.linkCheckbox("doEmConvert", staticElements.emDashCheckbox);
+  padSettings.linkCheckbox("doAutoscroll", staticElements.autoscrollCheckbox);
+  padSettings.linkCheckbox(
+    "isOutOfCharacter",
+    staticElements.oocCheckbox,
+    doUpdate,
+  );
+
+  padSettings.linkCheckbox(
+    "doSpellcheck",
+    staticElements.spellcheckCheckbox,
+    (value) => (staticElements.textBox.spellcheck = value),
+  );
+
+  // Chatbox settings
+  padSettings.linkCheckbox("allowSay", staticElements.sayFilterCheckbox, (v) =>
+    toggleChat("say", v),
+  );
+
+  padSettings.linkCheckbox(
+    "allowTell",
+    staticElements.tellFilterCheckbox,
+    (v) => toggleChat("tell", v),
+  );
+
+  padSettings.linkCheckbox(
+    "allowParty",
+    staticElements.partyFilterCheckbox,
+    (v) => toggleChat("party", v),
+  );
+
+  padSettings.linkCheckbox(
+    "allowEmote",
+    staticElements.emoteFilterCheckbox,
+    (v) => toggleChat("emote", v),
+  );
+
+  padSettings.linkCheckbox(
+    "allowLinkshell",
+    staticElements.linkshellFilterCheckbox,
+    (v) => toggleChat("linkshell", v),
+  );
+
+  padSettings.linkCheckbox(
+    "allowFreecompany",
+    staticElements.freecompanyFilterCheckbox,
+    (v) => toggleChat("freecompany", v),
+  );
+
+  padSettings.linkCheckbox(
+    "doChatFiltering",
+    staticElements.allFiltersCheckbox,
+    (value) => (staticElements.doChatFilteringStyle.disabled = value),
+  );
+
+  padSettings.linkCheckbox(
+    "doChatAutoscrolling",
+    staticElements.chatAutoScrollCheckbox,
+  );
 
   /**
    * Keyboard shortcuts
