@@ -195,6 +195,31 @@ class Settings {
   }
 
   /**
+   *
+   * @param {String} name
+   * @param {HTMLInputElement} node
+   * @param {((arg0:Boolean) => void)?} callback
+   */
+  linkCheckbox(name, node, callback) {
+    const _self = this;
+    const cb = callback ? callback : (_) => {};
+
+    dbgLog(`Linked "${name}" to`, node);
+
+    node.checked = _self.#data[name];
+
+    node.onchange = function () {
+      dbgLog(`Running onchange for "${name} => "${this.checked}"`);
+      _self.setEvent(name, () => {
+        _self.#data[name] = this.checked;
+      });
+      return cb(this.checked);
+    };
+
+    cb(_self.#data[name]);
+  }
+
+  /**
    * @param {Boolean} value
    */
   set doSpellcheck(value) {
@@ -256,6 +281,38 @@ class Settings {
    */
   get isOutOfCharacter() {
     return this.#data.isOutOfCharacter;
+  }
+
+  /**
+   * @param {Boolean} value
+   */
+  set doChatFiltering(value) {
+    return this.setEvent("doChatFiltering", () => {
+      this.#data.doChatFiltering = value;
+    });
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get doChatFiltering() {
+    return this.#data.doChatFiltering;
+  }
+
+  /**
+   * @param {Boolean} value
+   */
+  set doChatAutoscrolling(value) {
+    return this.setEvent("doChatAutoscrolling", () => {
+      this.#data.doChatAutoscrolling = value;
+    });
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get doChatAutoscrolling() {
+    return this.#data.doChatAutoscrolling;
   }
 
   /**
@@ -618,11 +675,23 @@ const getChatPrefix = () => {
 };
 
 const padSettings = new Settings("padSettings", {
+  // Scratchpad
   previewName: "Firstname L.",
+
   isOutOfCharacter: false,
   doSpellcheck: true,
   doEmConvert: true,
   doAutoscroll: true,
+
+  // Chatlog
+  doChatFiltering: true,
+  doChatAutoscrolling: true,
+  allowSay: true,
+  allowTell: true,
+  allowParty: true,
+  allowEmote: true,
+  allowLinkshell: true,
+  allowFreecompany: true,
 });
 
 const initialize = () => {
