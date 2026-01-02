@@ -10,6 +10,13 @@ const DEBUGGING = false;
  */
 const CHAR_COUNT_OFFSET = 8;
 
+const KNOWN_NAMES = new Set();
+const HIDDEN_NAMES = {};
+const HIDDEN_CHATS = {};
+
+const TIMESTAMP_RE = /^\[\d+-\d+-\d+ +\d+:\d+(:?:\d+)?(?: ..)?\] /;
+const NEWLINE_RE = /\r?\n/;
+
 const PREFIX_PATTERNS = {
   say: /^(\/s|\/say)\s/,
   party: /^(\/p|\/party)\s/,
@@ -20,6 +27,39 @@ const PREFIX_PATTERNS = {
   freecompany: /^(\/fc|\/freecompany)\s/,
   linkshell: /^(?:\/(?<cw>cw)?linkshell(?<linkshell>[1-9]))\s/,
 };
+
+const CHAT_PATTERNS = {
+  tell_to:
+    /^(?<prefix>>> (?<fname>[^:@\s]+) (?<lname>[^:@\s]+)(?<server>@[a-zA-Z]+)?:)/,
+
+  tell_from:
+    /^(?<prefix>(?<fname>[^:@\s]+) (?<lname>[^:@\s]+)(?<server>@[a-zA-Z]+)? +>>)/,
+
+  say: /^(?<prefix>(?<fname>[^:@\s]+) +(?<lname>[^@:\s]+)(?<server>@[a-zA-Z]+)?:)/,
+
+  party:
+    /^(?<prefix>\((?<fname>[^:@\s]+) +(?<lname>[^@:\s]+)(?<server>@[a-zA-Z]+)?\))/,
+
+  freecompany:
+    /^(?<prefix>\[FC\]<(?<fname>[^:@\s]+) +(?<lname>[^@:\s]+)(?<server>@[a-zA-Z]+)?>)/,
+
+  linkshell:
+    /^(?<prefix>\[(?<cw>CW)?LS(?<ls>[0-9])\]<(?<fname>[^:@\s]+) +(?<lname>[^@:\s]+)(?<server>@[a-zA-Z]+)?>)/,
+
+  emote:
+    /^(?<prefix>(?<fname>[^:@\s]+) +(?<lname>[^@:\s]+)(?<server>@[a-zA-Z]+)?)/,
+};
+
+const CHAT_TYPES = new Set([
+  "say",
+  "party",
+  "yell",
+  "shout",
+  "emote",
+  "tell",
+  "freecompany",
+  "linkshell",
+]);
 
 /**
  * Returns false and sends an error message to the console
@@ -36,7 +76,7 @@ const badInput = (message) => {
  */
 const dbgLog = (...what) => {
   if (DEBUGGING) {
-    console.log("DEBUG", ...what);
+    console.log("[DEBUG]", ...what);
   }
 };
 
@@ -65,7 +105,7 @@ const charLen = (str) => {
 };
 
 /**
- *
+ * Determine the message class of a chunked message using Regexp matches
  * @param {String} message
  */
 const getMessageClass = (message) => {
@@ -76,6 +116,22 @@ const getMessageClass = (message) => {
   }
 
   return "command";
+};
+
+/**
+ * Determine the message class of a chat message using Regexp matches
+ * @param {String} message
+ */
+const getChatClass = (message) => {
+  for (let chatType in CHAT_PATTERNS) {
+    if (!CHAT_PATTERNS[chatType]) continue;
+    if (!CHAT_PATTERNS[chatType].test(message)) continue;
+
+    return chatType;
+  }
+
+  alert("Invalid chatlog given, bad line:\n" + message);
+  throw `Could not determine chat class for: ${message}`;
 };
 
 /**
@@ -451,7 +507,7 @@ const populatePreview = (box, preview, settings, prefix) => {
 
 /**
  *
- * @param {HTMLTextAreaElement} box
+ * @param {String} lines
  * @param {Settings} settings
  * @param {String} prefix
  */
@@ -460,7 +516,7 @@ const formatLines = (lines, settings, prefix) => {
   lines = lines.replace(/[ \t]+/g, " ").replace(/^\s+/g, "");
   lines = lines.replace(/\s+>>/g, " ");
 
-  let all_lines = lines.split(/\n/);
+  let all_lines = lines.split(NEWLINE_RE);
   let result = [];
 
   let count = 0;
@@ -605,6 +661,148 @@ const processLine = (line, settings, prefix, singular) => {
   return results;
 };
 
+const clearFilters = () => {
+  for (const n in HIDDEN_NAMES) {
+    document.head.removeChild(HIDDEN_NAMES[n]);
+    delete HIDDEN_NAMES[n];
+  }
+};
+
+/**
+ *
+ * @param {HTMLLinkElement} node
+ */
+const toggleHidden = (node) => {
+  let name = node.parentElement.getAttribute("data-charName");
+  if (!name) {
+    console.log("ERROR: Failed to get name from node:", node.parentElement);
+    return;
+  }
+
+  if (HIDDEN_NAMES[name]) {
+    document.head.removeChild(HIDDEN_NAMES[name]);
+    delete HIDDEN_NAMES[name];
+    return;
+  }
+
+  let style = document.createElement("style");
+
+  style.innerHTML = `
+    #editor > #filewatch-container > ul#filewatch > li[data-charName="${name}"] {
+      display: none;
+      
+      & a {
+        text-decoration: 3px solid red line-through;
+      }
+
+      & a:hover {
+        text-decoration: 3px solid blue line-through;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+  HIDDEN_NAMES[name] = style;
+};
+
+/**
+ *
+ * @param {String} type
+ * @param {Boolean?} want
+ */
+const toggleChat = (type, want) => {
+  if (!CHAT_TYPES.has(type)) {
+    dbgLog(`What is a '${type}'?`);
+    return;
+  }
+
+  if (want === undefined || want === null) {
+    want = !HIDDEN_CHATS[type];
+  }
+
+  switch (want) {
+    case true:
+      dbgLog(`Ensuring ${type} is enabled`);
+      if (!HIDDEN_CHATS[type]) return;
+      document.head.removeChild(HIDDEN_CHATS[type]);
+      delete HIDDEN_CHATS[type];
+      break;
+
+    case false:
+      dbgLog(`Ensuring ${type} is disabled`);
+      if (HIDDEN_CHATS[type]) return;
+      let style = document.createElement("style");
+      style.innerHTML = `
+        #editor > #filewatch-container > ul#filewatch {
+          & li:has(> span.${type}) { 
+            display: none;
+            & a {
+              text-decoration: 3px black line-through;
+              cursor: default;
+            }
+          }
+        }
+      `;
+      document.head.appendChild(style);
+      HIDDEN_CHATS[type] = style;
+      break;
+  }
+};
+
+/**
+ *
+ * @param {Settings} settings
+ * @param {String[]} lines
+ */
+const populateFilewatch = (settings, lines) => {
+  let lastLine;
+  let filewatch = document.querySelector("ul#filewatch");
+  filewatch.parentElement.hidden = false;
+  filewatch.parentElement.style.display = "flex";
+
+  lines.forEach((l) => {
+    l = l.replace(/\s+/g, " ").trim();
+    if (/^\s*$/.test(l)) return;
+    if (l === lastLine) return;
+
+    lastLine = l;
+
+    let li = document.createElement("li");
+    let prefix = document.createElement("a");
+    let span = document.createElement("span");
+
+    // Remove beginning timestamps
+    l = l.replace(TIMESTAMP_RE, "");
+    let chatClass;
+    try {
+      chatClass = getChatClass(l);
+    } catch {
+      return;
+    }
+
+    /** @type {RegExpMatchArray} */
+    let match = CHAT_PATTERNS[chatClass].exec(l);
+    l = l.replace(CHAT_PATTERNS[chatClass], "").trim();
+    chatClass = chatClass.startsWith("tell") ? "tell" : chatClass;
+    let charName = `${match.groups.fname} ${match.groups.lname}`;
+
+    KNOWN_NAMES.add(charName);
+    prefix.onclick = () => toggleHidden(prefix);
+
+    li.setAttribute("data-charName", charName);
+    prefix.classList.add(chatClass);
+    span.classList.add(chatClass);
+    prefix.textContent = match?.groups.prefix;
+    span.textContent = l;
+
+    li.appendChild(prefix);
+    li.appendChild(span);
+    filewatch.appendChild(li);
+
+    if (settings.doChatAutoscrolling) scrollTo(filewatch, li);
+  });
+};
+
 /**
  * With a name, find an element on the DOM and assign it an onclick
  * @param {String} name
@@ -659,7 +857,10 @@ const makeMenu = (name, defaultPage) => {
       modal.close();
     };
 
-  return modal;
+  return (page) => {
+    setPage(page || defaultPage);
+    return modal.showModal();
+  };
 };
 
 const getChatPrefix = () => {
@@ -886,16 +1087,20 @@ const initialize = () => {
     if (event.ctrlKey) {
       switch (event.key) {
         case "s":
-          staticElements.saveLink.click();
           event.preventDefault();
+
+          staticElements.saveLink.click();
           break;
         case "o":
-          staticElements.openInput.click();
           event.preventDefault();
+
+          if (!window.showOpenFilePicker) return;
+          staticElements.followIcon.click();
           break;
         case "/":
-          staticElements.helpLink.click();
           event.preventDefault();
+
+          staticElements.helpLink.click();
           break;
       }
     }
@@ -928,23 +1133,6 @@ const initialize = () => {
     }, 1000);
   };
 
-  /** Load contents from a text file */
-  staticElements.openLink.onclick = function () {
-    staticElements.openInput.click();
-  };
-
-  /** @this {FileReader} */
-  staticElements.openInput.onchange = function () {
-    var reader = new FileReader();
-    reader.file = this.files[0];
-
-    reader.onload = function () {
-      staticElements.textBox.value = this.result;
-    };
-
-    reader.readAsText(this.files[0]);
-  };
-
   staticElements.saveLink.onclick = function () {
     this.download = `${STORAGE_NAME}.txt`;
     this.href = URL.createObjectURL(
@@ -968,25 +1156,6 @@ const initialize = () => {
     }
   };
 
-  staticElements.spellcheckCheckbox.onchange = function () {
-    padSettings.doSpellcheck = this.checked;
-    staticElements.textBox.spellcheck = this.checked;
-  };
-
-  staticElements.emDashCheckbox.onchange = function () {
-    padSettings.doEmConvert = this.checked;
-    doUpdate();
-  };
-
-  staticElements.oocCheckbox.onchange = function () {
-    padSettings.isOutOfCharacter = this.checked;
-    doUpdate();
-  };
-
-  staticElements.autoscrollCheckbox.onchange = function () {
-    padSettings.doAutoscroll = this.checked;
-  };
-
   staticElements.previewNameInput.onchange = function () {
     padSettings.previewName = this.value;
     doUpdate();
@@ -996,6 +1165,104 @@ const initialize = () => {
     staticElements.textBox.value.length,
     staticElements.textBox.value.length,
   );
+
+  staticElements.filtersMenu.onclick = function () {
+    staticElements.mainMenu("filters-page");
+  };
+
+  staticElements.chatScrollIndicator.onclick = function () {
+    scrollTo(staticElements.fileWatch, staticElements.fileWatch.lastChild);
+  };
+
+  staticElements.clearFiltersIcon.onclick = function () {
+    clearFilters();
+    for (const box of chatFilterBoxes) {
+      if (!box.checked) box.click();
+    }
+    scrollTo(staticElements.fileWatch, staticElements.fileWatch.lastChild);
+  };
+
+  const followLog = async function () {
+    /** @type {FileSystemFileHandle} */
+    let fh;
+    let timeout;
+    let tailTimeoutID;
+    let lastModified = 0;
+    let lastLen = 0;
+
+    timeout = () => {
+      let complete = function (fn) {
+        return async () => {
+          await fn();
+          window.clearTimeout(tailTimeoutID);
+          tailTimeoutID = window.setTimeout(timeout, 1000);
+        };
+      };
+
+      tailTimeoutID = window.setTimeout(
+        complete(async () => {
+          let file = await fh.getFile();
+
+          if (file.lastModified <= lastModified) return;
+
+          if (file.size < lastLen) {
+            lastModified = file.lastModified;
+            lastLen = file.size;
+          }
+
+          let stream = await file.slice(lastLen, file.size).text();
+          lastLen = file.size;
+          lastModified = file.lastModified;
+
+          populateFilewatch(padSettings, stream.split(NEWLINE_RE));
+        }, 1000),
+      );
+    };
+
+    [fh] = await window.showOpenFilePicker();
+    tailTimeoutID = window.setTimeout(timeout, 1000);
+
+    staticElements.followIcon.classList.remove("unopened");
+    staticElements.followIcon.classList.add("opened");
+
+    staticElements.followIcon.onclick = () => {
+      window.clearTimeout(tailTimeoutID);
+
+      staticElements.followIcon.onclick = followLog;
+      staticElements.followIcon.classList.remove("opened");
+      staticElements.followIcon.classList.add("unopened");
+
+      staticElements.fileWatch.parentElement.hidden = true;
+      staticElements.fileWatch.parentElement.style.display = "none";
+
+      while (staticElements.fileWatch.hasChildNodes()) {
+        staticElements.fileWatch.removeChild(
+          staticElements.fileWatch.firstChild,
+        );
+      }
+
+      clearFilters();
+      KNOWN_NAMES.clear();
+    };
+  };
+
+  if (window.showOpenFilePicker) {
+    staticElements.followIcon.onclick = followLog;
+    staticElements.followIcon.hidden = false;
+    staticElements.fileWatch.onscroll = () => {
+      if (!staticElements.fileWatch.lastChild) return;
+
+      const childH = staticElements.fileWatch.offsetHeight;
+      const scroll = staticElements.fileWatch.scrollTop;
+      const height = staticElements.fileWatch.scrollHeight;
+
+      if (height > scroll + childH) {
+        staticElements.chatScrollIndicator.hidden = false;
+      } else {
+        staticElements.chatScrollIndicator.hidden = true;
+      }
+    };
+  }
 
   window.onbeforeunload = function () {
     localStorage.setItem(STORAGE_NAME, staticElements.textBox.value);
