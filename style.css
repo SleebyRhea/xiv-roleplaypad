@@ -220,6 +220,8 @@ body {
     overflow-y: auto;
     margin: 0;
     padding-top: 0.5rem;
+    cursor: pointer;
+    user-select: none;
   }
 
   & ul {
