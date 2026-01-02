@@ -698,9 +698,9 @@ const initialize = () => {
   var timeoutID = null;
 
   const staticElements = {
-    ////////////////
-    // Scratchpad //
-    ////////////////
+    /////////////////
+    // Application //
+    /////////////////
 
     /** @type {HTMLTextAreaElement} */
     textBox: document.querySelector("#textbox"),
@@ -708,18 +708,15 @@ const initialize = () => {
     /** @type {HTMLUListElement} */
     previewBox: document.querySelector("#preview"),
 
-    /** @type {HTMLLinkElement} */
-    saveLink: document.querySelector("#save a"),
+    /** @type {HTMLUListElement} */
+    fileWatch: document.querySelector("ul#filewatch"),
 
-    /** @type {HTMLLinkElement} */
-    openLink: document.querySelector("#open a"),
+    /** @type {HTMLSpanElement} */
+    chatScrollIndicator: document.querySelector("#chat-scroll-indicator"),
 
-    /** @type {HTMLLinkElement} */
-    openInput: document.querySelector("#open input"),
-
-    //////////////
-    // Settings //
-    //////////////
+    /////////////////////////
+    // Scratchpad Settings //
+    /////////////////////////
 
     /** @type {HTMLInputElement} */
     spellcheckCheckbox: document.querySelector("#spellcheck"),
@@ -742,9 +739,67 @@ const initialize = () => {
     /** @type {HTMLInputElement} */
     previewNameInput: document.querySelector("#set-preview-name"),
 
-    /** @type {HTMLDialogElement} */
+    //////////////////////
+    // Chatlog Settings //
+    //////////////////////
+
+    /** @type {HTMLInputElement} */
+    sayFilterCheckbox: document.querySelector("#enable-say"),
+
+    /** @type {HTMLInputElement} */
+    tellFilterCheckbox: document.querySelector("#enable-tell"),
+
+    /** @type {HTMLInputElement} */
+    partyFilterCheckbox: document.querySelector("#enable-party"),
+
+    /** @type {HTMLInputElement} */
+    emoteFilterCheckbox: document.querySelector("#enable-emotes"),
+
+    /** @type {HTMLInputElement} */
+    linkshellFilterCheckbox: document.querySelector("#enable-linkshell"),
+
+    /** @type {HTMLInputElement} */
+    freecompanyFilterCheckbox: document.querySelector("#enable-freecompany"),
+
+    /** @type {HTMLInputElement} */
+    allFiltersCheckbox: document.querySelector("#enable-filters"),
+
+    /** @type {HTMLInputElement} */
+    chatAutoScrollCheckbox: document.querySelector("#enable-chat-autoscroll"),
+
+    /** @type {HTMLStyleElement} */
+    doChatFilteringStyle: document.querySelector(
+      "style#disable-chat-filtering",
+    ),
+
+    /////////////////////
+    // Menus and Icons //
+    /////////////////////
+
+    /** @type {HTMLLinkElement} */
+    clearFiltersIcon: document.querySelector("#clearfilters-icon"),
+
+    /** @type {HTMLLinkElement} */
+    saveLink: document.querySelector("#save a"),
+
+    /** @type {HTMLLinkElement} */
+    followIcon: document.querySelector("#followlog-icon"),
+
+    /** @type {(arg0: String)=>void} */
     mainMenu: makeMenu("mainmenu", "settings-page"),
+
+    /** @type {HTMLLinkElement} */
+    filtersMenu: document.querySelector("#otherfilters-icon"),
   };
+
+  const chatFilterBoxes = [
+    staticElements.sayFilterCheckbox,
+    staticElements.tellFilterCheckbox,
+    staticElements.partyFilterCheckbox,
+    staticElements.emoteFilterCheckbox,
+    staticElements.linkshellFilterCheckbox,
+    staticElements.freecompanyFilterCheckbox,
+  ];
 
   let allTruthy = all(staticElements);
   if (!allTruthy[0])
