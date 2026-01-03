@@ -1090,7 +1090,7 @@ document.onreadystatechange = () => {
         case "o":
           event.preventDefault();
 
-          if (HAS_FILESYSTEM_API) return;
+          if (!HAS_FILESYSTEM_API) return;
           elements.followIcon.click();
           break;
         case "/":
