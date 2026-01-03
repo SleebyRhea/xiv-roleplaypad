@@ -901,7 +901,7 @@ const padSettings = new Settings("padSettings", {
   allowFreecompany: true,
 });
 
-const initialize = (document.onreadystatechange = () => {
+document.onreadystatechange = () => {
   if (document.readyState === "interactive") {
     (() => {
       var timeoutID = null;
@@ -1276,4 +1276,4 @@ const initialize = (document.onreadystatechange = () => {
       doUpdate();
     })();
   }
-});
+};
