@@ -17,6 +17,9 @@ const HIDDEN_CHATS = {};
 
 const TIMESTAMP_RE = /^\[\d+-\d+-\d+ +\d+:\d+(:?:\d+)?(?: ..)?\] /;
 const NEWLINE_RE = /\r?\n/;
+const NAME_RE = `[A-Z][a-z'-]{1,14}`;
+const SERVER_RE = `(?<server>[A-Z][a-z]+)`;
+const FULLNAME_RE = `(?<fname>${NAME_RE}) +(?<lname>${NAME_RE})(?:@?${SERVER_RE})?`;
 
 const CHAT_TYPES = new Set([
   "say",
@@ -41,26 +44,24 @@ const PREFIX_PATTERNS = {
 };
 
 const CHAT_PATTERNS = {
-  tell_to:
-    /^(?<prefix>>> (?<fname>[^:@\s]+) (?<lname>[^:@\s]+)(?<server>@[a-zA-Z]+)?:)/,
-
-  tell_from:
-    /^(?<prefix>(?<fname>[^:@\s]+) (?<lname>[^:@\s]+)(?<server>@[a-zA-Z]+)? +>>)/,
-
-  say: /^(?<prefix>(?<fname>[^:@\s]+) +(?<lname>[^@:\s]+)(?<server>@[a-zA-Z]+)?:)/,
-
-  party:
-    /^(?<prefix>\((?<fname>[^:@\s]+) +(?<lname>[^@:\s]+)(?<server>@[a-zA-Z]+)?\))/,
-
-  freecompany:
-    /^(?<prefix>\[FC\]<(?<fname>[^:@\s]+) +(?<lname>[^@:\s]+)(?<server>@[a-zA-Z]+)?>)/,
-
-  linkshell:
-    /^(?<prefix>\[(?<cw>CW)?LS(?<ls>[0-9])\]<(?<fname>[^:@\s]+) +(?<lname>[^@:\s]+)(?<server>@[a-zA-Z]+)?>)/,
-
-  emote:
-    /^(?<prefix>(?<fname>[^:@\s]+) +(?<lname>[^@:\s]+)(?<server>@[a-zA-Z]+)?)/,
+  tell_to: new RegExp(`^(?<prefix>>> ${FULLNAME_RE}:)`),
+  tell_from: new RegExp(`^(?<prefix>${FULLNAME_RE} +>>)`),
+  say: new RegExp(`^(?<prefix>${FULLNAME_RE}:)`),
+  party: new RegExp(`^(?<prefix>\\(${FULLNAME_RE}\\))`),
+  shout: new RegExp(`^(?<prefix>${FULLNAME_RE} +shouts:)`),
+  yell: new RegExp(`^(?<prefix>${FULLNAME_RE} +yells:)`),
+  emote: new RegExp(`^(?<prefix>${FULLNAME_RE})`),
+  freecompany: new RegExp(`^(?<prefix>\\[FC\\]<${FULLNAME_RE}>)`),
+  linkshell: new RegExp(
+    `^(?<prefix>\\[(?<cw>CW)?LS(?<ls>[0-9])\\]<${FULLNAME_RE}>)`,
+  ),
 };
+
+if (DEBUGGING) {
+  for (const ptn in CHAT_PATTERNS) {
+    console.log(`Pattern ${ptn}:`, CHAT_PATTERNS[ptn]);
+  }
+}
 
 /**
  * Returns false and sends an error message to the console
@@ -127,11 +128,10 @@ const getChatClass = (message) => {
   for (let chatType in CHAT_PATTERNS) {
     if (!CHAT_PATTERNS[chatType]) continue;
     if (!CHAT_PATTERNS[chatType].test(message)) continue;
-
     return chatType;
   }
 
-  throw `Could not determine chat class for: ${message}`;
+  throw `Could not determine chat class for message ${message}`;
 };
 
 /**
@@ -776,7 +776,7 @@ const populateFilewatch = (settings, lines) => {
 
     lastLine = l;
     let li = document.createElement("li");
-    let prefix = document.createElement("a");
+
     let span = document.createElement("span");
 
     // Remove beginning timestamps
@@ -789,9 +789,14 @@ const populateFilewatch = (settings, lines) => {
     try {
       chatClass = getChatClass(l);
     } catch {
-      alert("Invalid chatlog given, skipping bad line:\n" + l);
+      span.classList.add("emote");
+      span.textContent = l;
+      li.appendChild(span);
+      filewatch.appendChild(li);
       return;
     }
+
+    let prefix = document.createElement("a");
 
     // If we've reached this, we /know/ this regex will match correctly as it is
     // used in getChatClass
@@ -925,6 +930,8 @@ const padSettings = new Settings("padSettings", {
   doChatAutoscrolling: true,
   allowSay: true,
   allowTell: true,
+  allowYell: false,
+  allowShout: false,
   allowParty: true,
   allowEmote: true,
   allowLinkshell: true,
@@ -989,6 +996,12 @@ document.onreadystatechange = () => {
     tellFilterCheckbox: document.querySelector("#enable-tell"),
 
     /** @type {HTMLInputElement} */
+    yellFilterCheckbox: document.querySelector("#enable-yell"),
+
+    /** @type {HTMLInputElement} */
+    shoutFilterCheckbox: document.querySelector("#enable-shout"),
+
+    /** @type {HTMLInputElement} */
     partyFilterCheckbox: document.querySelector("#enable-party"),
 
     /** @type {HTMLInputElement} */
@@ -1034,6 +1047,8 @@ document.onreadystatechange = () => {
   const chatFilters = {
     say: elements.sayFilterCheckbox,
     tell: elements.tellFilterCheckbox,
+    yell: elements.yellFilterCheckbox,
+    shout: elements.shoutFilterCheckbox,
     party: elements.partyFilterCheckbox,
     emote: elements.emoteFilterCheckbox,
     linkshell: elements.linkshellFilterCheckbox,
@@ -1086,6 +1101,14 @@ document.onreadystatechange = () => {
 
   padSettings.linkCheckbox("allowTell", chatFilters.tell, (v) =>
     toggleChat("tell", v),
+  );
+
+  padSettings.linkCheckbox("allowYell", chatFilters.yell, (v) =>
+    toggleChat("yell", v),
+  );
+
+  padSettings.linkCheckbox("allowShout", chatFilters.shout, (v) =>
+    toggleChat("shout", v),
   );
 
   padSettings.linkCheckbox("allowParty", chatFilters.party, (v) =>
