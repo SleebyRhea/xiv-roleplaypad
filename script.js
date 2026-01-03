@@ -203,6 +203,9 @@ class Settings {
   constructor(name, defaults) {
     this.#load = () => {
       this.#data = { ...defaults, ...JSON.parse(localStorage.getItem(name)) };
+      for (const k in this.#data) {
+        if (!defaults[k]) delete this.#data[k];
+      }
     };
 
     this.#save = () => {
@@ -810,23 +813,23 @@ const populateFilewatch = (settings, lines) => {
  */
 const makeMenu = (name, defaultPage) => {
   /** @type {HTMLDialogElement} */
-  let modal = document.querySelector(`#${name}`);
-  let icon = document.querySelector(`#${name}-icon`);
-  let close = modal.querySelector(".close");
+  const menus = {};
+  const modal = document.querySelector(`#${name}`);
+  const icon = document.querySelector(`#${name}-icon`);
+  const close = modal.querySelector(".close");
 
-  let menus = {};
   let selected = "";
 
   if (!modal || !icon) {
-    console.error(`makeMenu: Missing either #${name} or ${name}-icon Element`);
-    return;
+    throw `makeMenu: Missing either #${name} or ${name}-icon Element`;
   }
 
   /**
    * @param {String} pageName
    */
-  let setPage = (pageName) => {
+  const setPage = (pageName) => {
     if (selected === pageName) return;
+    if (!menus[pageName]) return;
 
     selected = pageName;
     menus[pageName].hidden = false;
@@ -846,17 +849,20 @@ const makeMenu = (name, defaultPage) => {
     if (!forMenu || forMenu === "") return;
 
     menus[forMenu] = modal.querySelector(`#${forMenu}`);
+    if (!menus[forMenu]) throw `Menu navlink is missing its page: ${forMenu}`;
 
     option.onclick = () => {
       setPage(forMenu);
     };
   });
 
-  if (close)
+  if (close) {
     modal.querySelector(".close").onclick = () => {
       modal.close();
     };
+  }
 
+  /** @param {String?} page */
   return (page) => {
     setPage(page || defaultPage);
     return modal.showModal();
@@ -895,385 +901,379 @@ const padSettings = new Settings("padSettings", {
   allowFreecompany: true,
 });
 
-const initialize = () => {
-  var timeoutID = null;
+const initialize = (document.onreadystatechange = () => {
+  if (document.readyState === "interactive") {
+    (() => {
+      var timeoutID = null;
 
-  const staticElements = {
-    /////////////////
-    // Application //
-    /////////////////
+      const elements = {
+        /////////////////
+        // Application //
+        /////////////////
 
-    /** @type {HTMLTextAreaElement} */
-    textBox: document.querySelector("#textbox"),
+        /** @type {HTMLTextAreaElement} */
+        textBox: document.querySelector("#textbox"),
 
-    /** @type {HTMLUListElement} */
-    previewBox: document.querySelector("#preview"),
+        /** @type {HTMLUListElement} */
+        previewBox: document.querySelector("#preview"),
 
-    /** @type {HTMLUListElement} */
-    fileWatch: document.querySelector("ul#filewatch"),
+        /** @type {HTMLUListElement} */
+        fileWatch: document.querySelector("ul#filewatch"),
 
-    /** @type {HTMLSpanElement} */
-    chatScrollIndicator: document.querySelector("#chat-scroll-indicator"),
+        /** @type {HTMLSpanElement} */
+        chatScrollIndicator: document.querySelector("#chat-scroll-indicator"),
 
-    /////////////////////////
-    // Scratchpad Settings //
-    /////////////////////////
+        /////////////////////////
+        // Scratchpad Settings //
+        /////////////////////////
 
-    /** @type {HTMLInputElement} */
-    spellcheckCheckbox: document.querySelector("#spellcheck"),
+        /** @type {HTMLInputElement} */
+        spellcheckCheckbox: document.querySelector("#spellcheck"),
 
-    /** @type {HTMLInputElement} */
-    emDashCheckbox: document.querySelector("#emdash"),
+        /** @type {HTMLInputElement} */
+        emDashCheckbox: document.querySelector("#emdash"),
 
-    /** @type {HTMLInputElement} */
-    oocCheckbox: document.querySelector("#ooc"),
+        /** @type {HTMLInputElement} */
+        oocCheckbox: document.querySelector("#ooc"),
 
-    /** @type {NodeListOf<HTMLInputElement>} */
-    chatTypeRadio: document.querySelectorAll("input[name='chatype']"),
+        /** @type {NodeListOf<HTMLInputElement>} */
+        chatTypeRadio: document.querySelectorAll("input[name='chatype']"),
 
-    /** @type {HTMLInputElement} */
-    customChatInput: document.querySelector("#customchat-input"),
+        /** @type {HTMLInputElement} */
+        customChatInput: document.querySelector("#customchat-input"),
 
-    /** @type {HTMLInputElement} */
-    autoscrollCheckbox: document.querySelector("#set-autoscroll"),
+        /** @type {HTMLInputElement} */
+        autoscrollCheckbox: document.querySelector("#set-autoscroll"),
 
-    /** @type {HTMLInputElement} */
-    previewNameInput: document.querySelector("#set-preview-name"),
+        /** @type {HTMLInputElement} */
+        previewNameInput: document.querySelector("#set-preview-name"),
 
-    //////////////////////
-    // Chatlog Settings //
-    //////////////////////
+        //////////////////////
+        // Chatlog Settings //
+        //////////////////////
 
-    /** @type {HTMLInputElement} */
-    sayFilterCheckbox: document.querySelector("#enable-say"),
+        /** @type {HTMLInputElement} */
+        sayFilterCheckbox: document.querySelector("#enable-say"),
 
-    /** @type {HTMLInputElement} */
-    tellFilterCheckbox: document.querySelector("#enable-tell"),
+        /** @type {HTMLInputElement} */
+        tellFilterCheckbox: document.querySelector("#enable-tell"),
 
-    /** @type {HTMLInputElement} */
-    partyFilterCheckbox: document.querySelector("#enable-party"),
+        /** @type {HTMLInputElement} */
+        partyFilterCheckbox: document.querySelector("#enable-party"),
 
-    /** @type {HTMLInputElement} */
-    emoteFilterCheckbox: document.querySelector("#enable-emotes"),
+        /** @type {HTMLInputElement} */
+        emoteFilterCheckbox: document.querySelector("#enable-emotes"),
 
-    /** @type {HTMLInputElement} */
-    linkshellFilterCheckbox: document.querySelector("#enable-linkshell"),
+        /** @type {HTMLInputElement} */
+        linkshellFilterCheckbox: document.querySelector("#enable-linkshell"),
 
-    /** @type {HTMLInputElement} */
-    freecompanyFilterCheckbox: document.querySelector("#enable-freecompany"),
+        /** @type {HTMLInputElement} */
+        freecompanyFilterCheckbox: document.querySelector(
+          "#enable-freecompany",
+        ),
 
-    /** @type {HTMLInputElement} */
-    allFiltersCheckbox: document.querySelector("#enable-filters"),
+        /** @type {HTMLInputElement} */
+        allFiltersCheckbox: document.querySelector("#enable-filters"),
 
-    /** @type {HTMLInputElement} */
-    chatAutoScrollCheckbox: document.querySelector("#enable-chat-autoscroll"),
+        /** @type {HTMLInputElement} */
+        chatAutoScrollCheckbox: document.querySelector(
+          "#enable-chat-autoscroll",
+        ),
 
-    /** @type {HTMLStyleElement} */
-    doChatFilteringStyle: document.querySelector(
-      "style#disable-chat-filtering",
-    ),
+        /** @type {HTMLStyleElement} */
+        doChatFilteringStyle: document.querySelector(
+          "style#disable-chat-filtering",
+        ),
 
-    /////////////////////
-    // Menus and Icons //
-    /////////////////////
+        /////////////////////
+        // Menus and Icons //
+        /////////////////////
 
-    /** @type {HTMLLinkElement} */
-    clearFiltersIcon: document.querySelector("#clearfilters-icon"),
+        /** Open the main menu to the given page if it exists */
+        mainMenu: makeMenu("mainmenu", "settings-page"),
 
-    /** @type {HTMLLinkElement} */
-    saveLink: document.querySelector("#save a"),
+        /** @type {HTMLLinkElement} */
+        clearFiltersIcon: document.querySelector("#clearfilters-icon"),
 
-    /** @type {HTMLLinkElement} */
-    followIcon: document.querySelector("#followlog-icon"),
+        /** @type {HTMLLinkElement} */
+        saveLink: document.querySelector("#save a"),
 
-    /** @type {(arg0: String)=>void} */
-    mainMenu: makeMenu("mainmenu", "settings-page"),
+        /** @type {HTMLLinkElement} */
+        followIcon: document.querySelector("#followlog-icon"),
 
-    /** @type {HTMLLinkElement} */
-    filtersMenu: document.querySelector("#otherfilters-icon"),
-  };
+        /** @type {HTMLLinkElement} */
+        filtersMenu: document.querySelector("#otherfilters-icon"),
+      };
 
-  const chatFilterBoxes = [
-    staticElements.sayFilterCheckbox,
-    staticElements.tellFilterCheckbox,
-    staticElements.partyFilterCheckbox,
-    staticElements.emoteFilterCheckbox,
-    staticElements.linkshellFilterCheckbox,
-    staticElements.freecompanyFilterCheckbox,
-  ];
+      const chatFilters = {
+        say: elements.sayFilterCheckbox,
+        tell: elements.tellFilterCheckbox,
+        party: elements.partyFilterCheckbox,
+        emote: elements.emoteFilterCheckbox,
+        linkshell: elements.linkshellFilterCheckbox,
+        freecompany: elements.freecompanyFilterCheckbox,
+      };
 
-  let allTruthy = all(staticElements);
-  if (!allTruthy[0])
-    throw `Cannot load, missing required elements: ${allTruthy[1]}`;
+      let allTruthy = all(elements);
+      if (!allTruthy[0])
+        throw `Cannot load, missing required elements: ${allTruthy[1]}`;
 
-  const doUpdate = () => {
-    return populatePreview(
-      staticElements.textBox,
-      staticElements.previewBox,
-      padSettings,
-      getChatPrefix(),
-    );
-  };
+      const doUpdate = () => {
+        return populatePreview(
+          elements.textBox,
+          elements.previewBox,
+          padSettings,
+          getChatPrefix(),
+        );
+      };
 
-  staticElements.textBox.value = localStorage.getItem(STORAGE_NAME) || "";
-  staticElements.previewNameInput.value = padSettings.previewName;
+      elements.textBox.value = localStorage.getItem(STORAGE_NAME) || "";
+      elements.previewNameInput.value = padSettings.previewName;
 
-  // Scratchpad Settings
-  padSettings.linkCheckbox("doEmConvert", staticElements.emDashCheckbox);
-  padSettings.linkCheckbox("doAutoscroll", staticElements.autoscrollCheckbox);
-  padSettings.linkCheckbox(
-    "isOutOfCharacter",
-    staticElements.oocCheckbox,
-    doUpdate,
-  );
+      // Scratchpad Settings
+      padSettings.linkCheckbox("doEmConvert", elements.emDashCheckbox);
+      padSettings.linkCheckbox("doAutoscroll", elements.autoscrollCheckbox);
+      padSettings.linkCheckbox(
+        "isOutOfCharacter",
+        elements.oocCheckbox,
+        doUpdate,
+      );
 
-  padSettings.linkCheckbox(
-    "doSpellcheck",
-    staticElements.spellcheckCheckbox,
-    (value) => (staticElements.textBox.spellcheck = value),
-  );
+      padSettings.linkCheckbox(
+        "doSpellcheck",
+        elements.spellcheckCheckbox,
+        (value) => (elements.textBox.spellcheck = value),
+      );
 
-  // Chatbox settings
-  padSettings.linkCheckbox("allowSay", staticElements.sayFilterCheckbox, (v) =>
-    toggleChat("say", v),
-  );
+      // Chatbox settings
+      padSettings.linkCheckbox(
+        "doChatFiltering",
+        elements.allFiltersCheckbox,
+        (value) => (elements.doChatFilteringStyle.disabled = value),
+      );
 
-  padSettings.linkCheckbox(
-    "allowTell",
-    staticElements.tellFilterCheckbox,
-    (v) => toggleChat("tell", v),
-  );
+      padSettings.linkCheckbox(
+        "doChatAutoscrolling",
+        elements.chatAutoScrollCheckbox,
+      );
 
-  padSettings.linkCheckbox(
-    "allowParty",
-    staticElements.partyFilterCheckbox,
-    (v) => toggleChat("party", v),
-  );
+      // Chatbox filters
+      padSettings.linkCheckbox("allowSay", chatFilters.say, (v) =>
+        toggleChat("say", v),
+      );
 
-  padSettings.linkCheckbox(
-    "allowEmote",
-    staticElements.emoteFilterCheckbox,
-    (v) => toggleChat("emote", v),
-  );
+      padSettings.linkCheckbox("allowTell", chatFilters.tell, (v) =>
+        toggleChat("tell", v),
+      );
 
-  padSettings.linkCheckbox(
-    "allowLinkshell",
-    staticElements.linkshellFilterCheckbox,
-    (v) => toggleChat("linkshell", v),
-  );
+      padSettings.linkCheckbox("allowParty", chatFilters.party, (v) =>
+        toggleChat("party", v),
+      );
 
-  padSettings.linkCheckbox(
-    "allowFreecompany",
-    staticElements.freecompanyFilterCheckbox,
-    (v) => toggleChat("freecompany", v),
-  );
+      padSettings.linkCheckbox("allowEmote", chatFilters.emote, (v) =>
+        toggleChat("emote", v),
+      );
 
-  padSettings.linkCheckbox(
-    "doChatFiltering",
-    staticElements.allFiltersCheckbox,
-    (value) => (staticElements.doChatFilteringStyle.disabled = value),
-  );
+      padSettings.linkCheckbox("allowLinkshell", chatFilters.linkshell, (v) =>
+        toggleChat("linkshell", v),
+      );
 
-  padSettings.linkCheckbox(
-    "doChatAutoscrolling",
-    staticElements.chatAutoScrollCheckbox,
-  );
+      padSettings.linkCheckbox(
+        "allowFreecompany",
+        chatFilters.freecompany,
+        (v) => toggleChat("freecompany", v),
+      );
 
-  /**
-   * Keyboard shortcuts
-   * @param {Event} event
-   */
-  document.onkeydown = function (event) {
-    if (event.ctrlKey) {
-      switch (event.key) {
-        case "s":
+      /**
+       * Keyboard shortcuts
+       * @param {Event} event
+       */
+      document.onkeydown = function (event) {
+        if (event.ctrlKey) {
+          switch (event.key) {
+            case "s":
+              event.preventDefault();
+
+              elements.saveLink.click();
+              break;
+            case "o":
+              event.preventDefault();
+
+              if (!window.showOpenFilePicker) return;
+              elements.followIcon.click();
+              break;
+            case "/":
+              event.preventDefault();
+
+              elements.mainMenu("help-page");
+              break;
+          }
+        }
+      };
+
+      /**
+       * Allow inputting tabs in the textarea instead of changing focus to the next element
+       * (must use onkeydown to prevent default behavior of moving focus)
+       * @param {Event} event
+       */
+      elements.textBox.onkeydown = function (event) {
+        if (event.key === "Tab") {
           event.preventDefault();
+          var text = this.value,
+            s = this.selectionStart,
+            e = this.selectionEnd;
+          this.value = text.substring(0, s) + "\t" + text.substring(e);
+          this.selectionStart = this.selectionEnd = s + 1;
+        }
+      };
 
-          staticElements.saveLink.click();
-          break;
-        case "o":
-          event.preventDefault();
+      /**
+       * Update the preview and reset save timeout
+       */
+      elements.textBox.onkeyup = function () {
+        window.clearTimeout(timeoutID);
 
-          if (!window.showOpenFilePicker) return;
-          staticElements.followIcon.click();
-          break;
-        case "/":
-          event.preventDefault();
+        timeoutID = window.setTimeout(() => {
+          localStorage.setItem(STORAGE_NAME, elements.textBox.value);
+          doUpdate();
+        }, 100);
+      };
 
-          staticElements.helpLink.click();
-          break;
-      }
-    }
-  };
+      elements.saveLink.onclick = function () {
+        this.download = `${STORAGE_NAME}.txt`;
+        this.href = URL.createObjectURL(
+          new Blob([elements.textBox.value], {
+            type: "text/plain",
+          }),
+        );
+      };
 
-  /**
-   * Allow inputting tabs in the textarea instead of changing focus to the next element
-   * (must use onkeydown to prevent default behavior of moving focus)
-   * @param {Event} event
-   */
-  staticElements.textBox.onkeydown = function (event) {
-    if (event.key === "Tab") {
-      event.preventDefault();
-      var text = this.value,
-        s = this.selectionStart,
-        e = this.selectionEnd;
-      this.value = text.substring(0, s) + "\t" + text.substring(e);
-      this.selectionStart = this.selectionEnd = s + 1;
-    }
-  };
+      elements.chatTypeRadio.forEach((node) => {
+        node.onchange = doUpdate;
+      });
 
-  /**
-   * Update the preview and reset save timeout
-   */
-  staticElements.textBox.onkeyup = function () {
-    doUpdate();
-    window.clearTimeout(timeoutID);
-    timeoutID = window.setTimeout(() => {
-      localStorage.setItem(STORAGE_NAME, staticElements.textBox.value);
-    }, 1000);
-  };
+      elements.customChatInput.oninput = () => {
+        var current_chat = document.querySelector(
+          "input[name='chatype']:checked",
+        ).id;
 
-  staticElements.saveLink.onclick = function () {
-    this.download = `${STORAGE_NAME}.txt`;
-    this.href = URL.createObjectURL(
-      new Blob([staticElements.textBox.value], {
-        type: "text/plain",
-      }),
-    );
-  };
+        if (current_chat === "customchat") {
+          doUpdate();
+        }
+      };
 
-  staticElements.chatTypeRadio.forEach((node) => {
-    node.onchange = doUpdate;
-  });
+      elements.previewNameInput.onchange = function () {
+        padSettings.previewName = this.value;
+        doUpdate();
+      };
 
-  staticElements.customChatInput.oninput = () => {
-    var current_chat = document.querySelector(
-      "input[name='chatype']:checked",
-    ).id;
+      elements.textBox.setSelectionRange(
+        elements.textBox.value.length,
+        elements.textBox.value.length,
+      );
 
-    if (current_chat === "customchat") {
-      doUpdate();
-    }
-  };
+      elements.filtersMenu.onclick = () => {
+        elements.mainMenu("filters-page");
+      };
 
-  staticElements.previewNameInput.onchange = function () {
-    padSettings.previewName = this.value;
-    doUpdate();
-  };
+      elements.chatScrollIndicator.onclick = function () {
+        scrollTo(elements.fileWatch, elements.fileWatch.lastChild);
+      };
 
-  staticElements.textBox.setSelectionRange(
-    staticElements.textBox.value.length,
-    staticElements.textBox.value.length,
-  );
+      elements.clearFiltersIcon.onclick = function () {
+        clearFilters();
+        for (const box in chatFilters) {
+          if (!chatFilters[box].checked) chatFilters[box].click();
+        }
+        scrollTo(elements.fileWatch, elements.fileWatch.lastChild);
+      };
 
-  staticElements.filtersMenu.onclick = function () {
-    staticElements.mainMenu("filters-page");
-  };
+      const followLog = async function () {
+        /** @type {FileSystemFileHandle} */
+        let fh;
+        let timeout;
+        let tailTimeoutID;
+        let lastModified = 0;
+        let lastLen = 0;
 
-  staticElements.chatScrollIndicator.onclick = function () {
-    scrollTo(staticElements.fileWatch, staticElements.fileWatch.lastChild);
-  };
+        timeout = () => {
+          let complete = function (fn) {
+            return async () => {
+              await fn();
+              window.clearTimeout(tailTimeoutID);
+              tailTimeoutID = window.setTimeout(timeout, 1000);
+            };
+          };
 
-  staticElements.clearFiltersIcon.onclick = function () {
-    clearFilters();
-    for (const box of chatFilterBoxes) {
-      if (!box.checked) box.click();
-    }
-    scrollTo(staticElements.fileWatch, staticElements.fileWatch.lastChild);
-  };
+          tailTimeoutID = window.setTimeout(
+            complete(async () => {
+              let file = await fh.getFile();
 
-  const followLog = async function () {
-    /** @type {FileSystemFileHandle} */
-    let fh;
-    let timeout;
-    let tailTimeoutID;
-    let lastModified = 0;
-    let lastLen = 0;
+              if (file.lastModified <= lastModified) return;
 
-    timeout = () => {
-      let complete = function (fn) {
-        return async () => {
-          await fn();
+              if (file.size < lastLen) {
+                lastModified = file.lastModified;
+                lastLen = file.size;
+              }
+
+              let stream = await file.slice(lastLen, file.size).text();
+              lastLen = file.size;
+              lastModified = file.lastModified;
+
+              populateFilewatch(padSettings, stream.split(NEWLINE_RE));
+            }, 1000),
+          );
+        };
+
+        [fh] = await window.showOpenFilePicker();
+        tailTimeoutID = window.setTimeout(timeout, 1000);
+
+        elements.followIcon.classList.remove("unopened");
+        elements.followIcon.classList.add("opened");
+
+        elements.followIcon.onclick = () => {
           window.clearTimeout(tailTimeoutID);
-          tailTimeoutID = window.setTimeout(timeout, 1000);
+
+          elements.followIcon.onclick = followLog;
+          elements.followIcon.classList.remove("opened");
+          elements.followIcon.classList.add("unopened");
+
+          elements.fileWatch.parentElement.hidden = true;
+          elements.fileWatch.parentElement.style.display = "none";
+
+          while (elements.fileWatch.hasChildNodes()) {
+            elements.fileWatch.removeChild(elements.fileWatch.firstChild);
+          }
+
+          clearFilters();
+          KNOWN_NAMES.clear();
         };
       };
 
-      tailTimeoutID = window.setTimeout(
-        complete(async () => {
-          let file = await fh.getFile();
+      if (window.showOpenFilePicker) {
+        elements.followIcon.onclick = followLog;
+        elements.followIcon.hidden = false;
+        elements.fileWatch.onscroll = () => {
+          if (!elements.fileWatch.lastChild) return;
 
-          if (file.lastModified <= lastModified) return;
+          const childH = elements.fileWatch.offsetHeight;
+          const scroll = elements.fileWatch.scrollTop;
+          const height = elements.fileWatch.scrollHeight;
 
-          if (file.size < lastLen) {
-            lastModified = file.lastModified;
-            lastLen = file.size;
+          if (height > scroll + childH) {
+            elements.chatScrollIndicator.hidden = false;
+          } else {
+            elements.chatScrollIndicator.hidden = true;
           }
-
-          let stream = await file.slice(lastLen, file.size).text();
-          lastLen = file.size;
-          lastModified = file.lastModified;
-
-          populateFilewatch(padSettings, stream.split(NEWLINE_RE));
-        }, 1000),
-      );
-    };
-
-    [fh] = await window.showOpenFilePicker();
-    tailTimeoutID = window.setTimeout(timeout, 1000);
-
-    staticElements.followIcon.classList.remove("unopened");
-    staticElements.followIcon.classList.add("opened");
-
-    staticElements.followIcon.onclick = () => {
-      window.clearTimeout(tailTimeoutID);
-
-      staticElements.followIcon.onclick = followLog;
-      staticElements.followIcon.classList.remove("opened");
-      staticElements.followIcon.classList.add("unopened");
-
-      staticElements.fileWatch.parentElement.hidden = true;
-      staticElements.fileWatch.parentElement.style.display = "none";
-
-      while (staticElements.fileWatch.hasChildNodes()) {
-        staticElements.fileWatch.removeChild(
-          staticElements.fileWatch.firstChild,
-        );
+        };
       }
 
-      clearFilters();
-      KNOWN_NAMES.clear();
-    };
-  };
+      window.onbeforeunload = function () {
+        localStorage.setItem(STORAGE_NAME, elements.textBox.value);
+        padSettings.save();
+      };
 
-  if (window.showOpenFilePicker) {
-    staticElements.followIcon.onclick = followLog;
-    staticElements.followIcon.hidden = false;
-    staticElements.fileWatch.onscroll = () => {
-      if (!staticElements.fileWatch.lastChild) return;
-
-      const childH = staticElements.fileWatch.offsetHeight;
-      const scroll = staticElements.fileWatch.scrollTop;
-      const height = staticElements.fileWatch.scrollHeight;
-
-      if (height > scroll + childH) {
-        staticElements.chatScrollIndicator.hidden = false;
-      } else {
-        staticElements.chatScrollIndicator.hidden = true;
-      }
-    };
+      doUpdate();
+    })();
   }
-
-  window.onbeforeunload = function () {
-    localStorage.setItem(STORAGE_NAME, staticElements.textBox.value);
-    padSettings.save();
-  };
-
-  doUpdate();
-};
-
-document.onreadystatechange = () => {
-  if (document.readyState === "interactive") {
-    initialize();
-  }
-};
+});
