@@ -18,6 +18,17 @@ const HIDDEN_CHATS = {};
 const TIMESTAMP_RE = /^\[\d+-\d+-\d+ +\d+:\d+(:?:\d+)?(?: ..)?\] /;
 const NEWLINE_RE = /\r?\n/;
 
+const CHAT_TYPES = new Set([
+  "say",
+  "party",
+  "yell",
+  "shout",
+  "emote",
+  "tell",
+  "freecompany",
+  "linkshell",
+]);
+
 const PREFIX_PATTERNS = {
   say: /^(\/s|\/say)\s/,
   party: /^(\/p|\/party)\s/,
@@ -51,17 +62,6 @@ const CHAT_PATTERNS = {
     /^(?<prefix>(?<fname>[^:@\s]+) +(?<lname>[^@:\s]+)(?<server>@[a-zA-Z]+)?)/,
 };
 
-const CHAT_TYPES = new Set([
-  "say",
-  "party",
-  "yell",
-  "shout",
-  "emote",
-  "tell",
-  "freecompany",
-  "linkshell",
-]);
-
 /**
  * Returns false and sends an error message to the console
  * @param {String} message
@@ -82,7 +82,7 @@ const dbgLog = (...what) => {
 };
 
 /**
- * Raise an exception if any objects are null or undefined
+ * Determine if all values are truthy, and return the failing if not
  * @param {Object} object
  */
 const all = (object) => {
@@ -131,12 +131,12 @@ const getChatClass = (message) => {
     return chatType;
   }
 
-  alert("Invalid chatlog given, bad line:\n" + message);
   throw `Could not determine chat class for: ${message}`;
 };
 
 /**
- *
+ * Determines the preview to display based on the given prefixed line- prepending
+ * it to the line and returning it. One failure, just return it's input.
  * @param {String} line
  * @param {String} cls
  * @param {Settings} settings
@@ -677,9 +677,9 @@ const clearFilters = () => {
  * @param {HTMLLinkElement} node
  */
 const toggleHidden = (node) => {
-  let name = node.parentElement.getAttribute("data-charName");
+  let name = node.getAttribute("data-charName");
   if (!name) {
-    console.log("ERROR: Failed to get name from node:", node.parentElement);
+    console.log("ERROR: Failed to get name from node:", node);
     return;
   }
 
@@ -765,35 +765,53 @@ const populateFilewatch = (settings, lines) => {
   filewatch.parentElement.style.display = "flex";
 
   lines.forEach((l) => {
+    // We don't want extra whitespace
     l = l.replace(/\s+/g, " ").trim();
+
+    // We don't want empty lines
     if (/^\s*$/.test(l)) return;
+
+    // We don't want repeat lines
     if (l === lastLine) return;
 
     lastLine = l;
-
     let li = document.createElement("li");
     let prefix = document.createElement("a");
     let span = document.createElement("span");
 
     // Remove beginning timestamps
     l = l.replace(TIMESTAMP_RE, "");
+
     let chatClass;
+
+    // If we cannot determine the chat class, then we likely have a malformed
+    // line in the logs. Just alert and return here, we'll move onto the next line.
     try {
       chatClass = getChatClass(l);
     } catch {
+      alert("Invalid chatlog given, skipping bad line:\n" + l);
       return;
     }
 
+    // If we've reached this, we /know/ this regex will match correctly as it is
+    // used in getChatClass
     /** @type {RegExpMatchArray} */
     let match = CHAT_PATTERNS[chatClass].exec(l);
-    l = l.replace(CHAT_PATTERNS[chatClass], "").trim();
-    chatClass = chatClass.startsWith("tell") ? "tell" : chatClass;
     let charName = `${match.groups.fname} ${match.groups.lname}`;
-
     KNOWN_NAMES.add(charName);
-    prefix.onclick = () => toggleHidden(prefix);
 
+    // Cut the prefix from the line to be displayed
+    l = l.replace(CHAT_PATTERNS[chatClass], "").trim();
+
+    // We have two different forms of tells available, this accounts for that
+    chatClass = chatClass.startsWith("tell") ? "tell" : chatClass;
+
+    // Being the root for the message, it's simpler to handle filtering if we simply
+    // affix the name of the character to said element. When we click the prefix,
+    // we handle toggling filtering the for user parsed from the log in question.
+    prefix.onclick = () => toggleHidden(li);
     li.setAttribute("data-charName", charName);
+
     prefix.classList.add(chatClass);
     span.classList.add(chatClass);
     prefix.textContent = match?.groups.prefix;
@@ -808,16 +826,23 @@ const populateFilewatch = (settings, lines) => {
 };
 
 /**
- * With a name, find an element on the DOM and assign it an onclick
+ * With a name, find the appropriate element on the DOM and it's matching icon.
+ * Once complete, we assign an onclick to every .option element with a 'for'
+ * attribute- which itself denotes which page to switch to.
+ *
+ * Returns a function that - when called - opens the menu to either the given page
+ * or the default.
+ *
  * @param {String} name
  * @param {String} defaultPage
  */
 const makeMenu = (name, defaultPage) => {
   /** @type {HTMLDialogElement} */
-  const menus = {};
   const modal = document.querySelector(`#${name}`);
   const icon = document.querySelector(`#${name}-icon`);
   const close = modal.querySelector(".close");
+
+  const menus = {};
 
   let selected = "";
 
@@ -870,6 +895,10 @@ const makeMenu = (name, defaultPage) => {
   };
 };
 
+/**
+ * Returns the current chat prefix based on the currently selected chat radio
+ * @returns {String}
+ */
 const getChatPrefix = () => {
   var prefix = document.querySelector('input[name="chatype"]:checked').value;
   if (prefix === "") {
