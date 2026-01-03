@@ -1,6 +1,7 @@
 const STORAGE_NAME = "padContent";
 const CHARACTER_LIMIT = 500;
 const DEBUGGING = false;
+const HAS_FILESYSTEM_API = window.showOpenFilePicker ? true : false;
 
 /**
  * The amount of characters that make up: (##/##)
@@ -1089,7 +1090,7 @@ document.onreadystatechange = () => {
         case "o":
           event.preventDefault();
 
-          if (!window.showOpenFilePicker) return;
+          if (HAS_FILESYSTEM_API) return;
           elements.followIcon.click();
           break;
         case "/":
@@ -1117,9 +1118,7 @@ document.onreadystatechange = () => {
     }
   };
 
-  /**
-   * Update the preview and reset save timeout
-   */
+  /** Update the preview and reset save timeout */
   elements.textBox.onkeyup = function () {
     window.clearTimeout(timeoutID);
 
@@ -1129,6 +1128,7 @@ document.onreadystatechange = () => {
     }, 100);
   };
 
+  /** Save the contents of the textbox to a file */
   elements.saveLink.onclick = function () {
     this.download = `${STORAGE_NAME}.txt`;
     this.href = URL.createObjectURL(
@@ -1138,18 +1138,18 @@ document.onreadystatechange = () => {
     );
   };
 
+  /** When the chat type is changed, we need to rebuild the preview  */
   elements.chatTypeRadio.forEach((node) => {
     node.onchange = doUpdate;
   });
 
+  /** Similarly, when we're changing the custom prefix; update the preview if it's in use*/
   elements.customChatInput.oninput = () => {
     var current_chat = document.querySelector(
       "input[name='chatype']:checked",
     ).id;
 
-    if (current_chat === "customchat") {
-      doUpdate();
-    }
+    if (current_chat === "customchat") doUpdate();
   };
 
   elements.previewNameInput.onchange = function () {
@@ -1166,10 +1166,12 @@ document.onreadystatechange = () => {
     elements.mainMenu("filters-page");
   };
 
+  /** Scroll to the bottom of the chatbox when scrolled up */
   elements.chatScrollIndicator.onclick = function () {
     scrollTo(elements.fileWatch, elements.fileWatch.lastChild);
   };
 
+  /** When clicked, clear player filters and reset the chatype filters */
   elements.clearFiltersIcon.onclick = function () {
     clearFilters();
     for (const box in chatFilters) {
@@ -1187,6 +1189,11 @@ document.onreadystatechange = () => {
     let lastLen = 0;
 
     timeout = () => {
+      /**
+       * Ensure that we're returning an asyncronous function, and resetting our timeout
+       * @param {*} fn
+       * @returns
+       */
       let complete = function (fn) {
         return async () => {
           await fn();
@@ -1195,11 +1202,17 @@ document.onreadystatechange = () => {
         };
       };
 
+      /**
+       * Using the file handle received, set a timer every second to check the file for
+       * changes. If the timestamp for modification is less than now, pass. If the size is
+       * the same, pass. Repopulate the chatbox if its been updated.
+       */
       tailTimeoutID = window.setTimeout(
         complete(async () => {
           let file = await fh.getFile();
 
           if (file.lastModified <= lastModified) return;
+          if (file.size == lastLen) return;
 
           if (file.size < lastLen) {
             lastModified = file.lastModified;
@@ -1221,6 +1234,10 @@ document.onreadystatechange = () => {
     elements.followIcon.classList.remove("unopened");
     elements.followIcon.classList.add("opened");
 
+    /**
+     * Modify the followicon element classlist to alter the display of the icon, and
+     * upon closing of the chatbox, clear out userfilters.
+     */
     elements.followIcon.onclick = () => {
       window.clearTimeout(tailTimeoutID);
 
@@ -1240,9 +1257,14 @@ document.onreadystatechange = () => {
     };
   };
 
-  if (window.showOpenFilePicker) {
-    elements.followIcon.onclick = followLog;
+  /**
+   * If we have access to the File System API, then we can enable the log tailing
+   * features. Display the icon, enable the feature, and prepare the scrollIndicator
+   */
+  if (HAS_FILESYSTEM_API) {
     elements.followIcon.hidden = false;
+    elements.followIcon.onclick = followLog;
+
     elements.fileWatch.onscroll = () => {
       if (!elements.fileWatch.lastChild) return;
 
@@ -1258,6 +1280,7 @@ document.onreadystatechange = () => {
     };
   }
 
+  /* Make sure that the pad contents and our settings are saved just before we exit. */
   window.onbeforeunload = function () {
     localStorage.setItem(STORAGE_NAME, elements.textBox.value);
     padSettings.save();
