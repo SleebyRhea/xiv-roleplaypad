@@ -778,7 +778,6 @@ const populateFilewatch = (settings, lines) => {
 
     lastLine = l;
     let li = document.createElement("li");
-
     let span = document.createElement("span");
 
     // Remove beginning timestamps
@@ -821,7 +820,7 @@ const populateFilewatch = (settings, lines) => {
 
     prefix.classList.add(chatClass);
     span.classList.add(chatClass);
-    prefix.textContent = match?.groups.prefix;
+    prefix.textContent = match.groups.prefix;
     span.textContent = l;
 
     li.appendChild(prefix);
