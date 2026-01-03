@@ -1,6 +1,6 @@
 const STORAGE_NAME = "padContent";
 const CHARACTER_LIMIT = 500;
-const DEBUGGING = false;
+const DEBUGGING = true;
 const HAS_FILESYSTEM_API = window.showOpenFilePicker ? true : false;
 
 /**
@@ -205,7 +205,8 @@ class Settings {
     this.#load = () => {
       this.#data = { ...defaults, ...JSON.parse(localStorage.getItem(name)) };
       for (const k in this.#data) {
-        if (!defaults[k]) delete this.#data[k];
+        if (defaults[k] === undefined || defaults[k] === null)
+          delete this.#data[k];
       }
     };
 
@@ -721,6 +722,7 @@ const toggleChat = (type, want) => {
   }
 
   if (want === undefined || want === null) {
+    dbgLog(`I dont know what I want with '${type}' ...`);
     want = !HIDDEN_CHATS[type];
   }
 
@@ -1324,7 +1326,7 @@ document.onreadystatechange = () => {
       const scroll = elements.fileWatch.scrollTop;
       const height = elements.fileWatch.scrollHeight;
 
-      if (height > scroll + childH) {
+      if (height > scroll + childH + 10) {
         elements.chatScrollIndicator.hidden = false;
       } else {
         elements.chatScrollIndicator.hidden = true;
