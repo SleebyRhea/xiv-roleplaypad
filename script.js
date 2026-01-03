@@ -17,7 +17,7 @@ const HIDDEN_CHATS = {};
 
 const TIMESTAMP_RE = /^\[\d+-\d+-\d+ +\d+:\d+(:?:\d+)?(?: ..)?\] /;
 const NEWLINE_RE = /\r?\n/;
-const NAME_RE = `(?:[A-Z][a-z'-]{1,14}|[A-Z]\.)`;
+const NAME_RE = `(?:[A-Z][a-z'-]{1,14}|[A-Z]\\.)`;
 const SERVER_RE = `(?<server>[A-Z][a-z]+)`;
 const FULLNAME_RE = `(?<fname>${NAME_RE}) +(?<lname>${NAME_RE})(?:@?${SERVER_RE})?`;
 
