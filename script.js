@@ -1221,7 +1221,7 @@ document.onreadystatechange = () => {
 
   /** Scroll to the bottom of the chatbox when scrolled up */
   elements.chatScrollIndicator.onclick = function () {
-    scrollTo(elements.fileWatch, elements.fileWatch.lastChild);
+    elements.fileWatch.scrollTo(elements.fileWatch.scrollHeight);
   };
 
   /** When clicked, clear player filters and reset the chatype filters */
