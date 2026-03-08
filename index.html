@@ -20,6 +20,14 @@
         display: inline-block !important;
       }
     </style>
+    <style id="default-hide-fapi">
+      .needs-fapi {
+        display: hidden;
+      }
+    </style>
+    <audio id="message-received">
+      <source src="/assets/dreamy-beep.wav" type="audio/wav" />
+    </audio>
   </head>
   <body>
     <div id="editor">
@@ -182,7 +190,7 @@
         </label>
 
         <a
-          class="navbar-icon unopened"
+          class="navbar-icon needs-fapi unopened"
           href="#"
           title="Select Log"
           id="followlog-icon"
@@ -250,6 +258,14 @@
             </label>
           </span>
 
+          <span class="setting-container">
+            <span class="setting-name">Chat Sounds</span>
+            <label class="setting-description" for="mute-chat">
+              Beep on new message
+              <input type="checkbox" id="mute-chat" checked="true" />
+              <span class="checkbox"></span>
+            </label>
+          </span>
           <br />
         </div>
 
@@ -258,13 +274,13 @@
           <h2>Help</h2>
           <p>Simply type in the textbox box at the bottom, and go.</p>
           <p>
-            Clicking the generated text will copy it, highlighting it green.
-            Click again - or simply type - to unhighlight.
+            Clicking the generated text will copy it, highlighting the
+            background. Click again, or simply type, to unhighlight!
           </p>
           <hr />
           <h3>Keyboard Shortcuts</h3>
           <p><code>Ctrl-s</code>: Save to a file</p>
-          <p><code>Ctrl-o</code>: Open a file</p>
+          <p class="needs-fapi"><code>Ctrl-o</code>: Open a file</p>
           <p><code>Ctrl-/</code>: Open this help dialog</p>
         </div>
 
