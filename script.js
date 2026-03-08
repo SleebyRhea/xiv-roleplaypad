@@ -879,7 +879,9 @@ const populateFilewatch = (settings, lines) => {
     li.appendChild(document.createElement("br"));
     filewatch.appendChild(li);
 
-    countChanges++;
+    if (!NAME_BLACKLIST[charName] && !HIDDEN_CHATS[chatClass]) {
+      countChanges++;
+    }
 
     if (settings.doChatAutoscrolling) scrollTo(filewatch, li);
   });
@@ -1000,7 +1002,7 @@ const padSettings = new Settings("padSettings", {
 });
 
 const queryElements = () => {
-  return {
+  const elements = {
     /////////////////
     // Application //
     /////////////////
@@ -1113,6 +1115,11 @@ const queryElements = () => {
     /** @type {HTMLStyleElement} */
     hideFapiUsers: document.querySelector("style#default-hide-fapi"),
   };
+
+  if (!all(elements))
+    throw `Cannot load, missing required elements: ${getNull(elements).join(", ")}`;
+
+  return elements;
 };
 
 document.onreadystatechange = () => {
@@ -1121,9 +1128,6 @@ document.onreadystatechange = () => {
   var timeoutID = null;
 
   const elements = queryElements();
-
-  if (!all(elements))
-    throw `Cannot load, missing required elements: ${getNull(elements).join(", ")}`;
 
   const chatFilters = {
     say: elements.sayFilterCheckbox,
@@ -1325,8 +1329,8 @@ document.onreadystatechange = () => {
     elements.fileWatch.onscroll = () => {
       if (!elements.fileWatch.lastChild) return;
 
-      const childH = elements.fileWatch.offsetHeight;
       const scroll = elements.fileWatch.scrollTop;
+      const childH = elements.fileWatch.offsetHeight;
       const height = elements.fileWatch.scrollHeight;
 
       if (height > scroll + childH + 10) {
