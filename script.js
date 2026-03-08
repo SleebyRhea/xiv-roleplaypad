@@ -456,6 +456,14 @@ const scrollTo = (container, child) => {
 };
 
 /**
+ * @param {HTMLElement} child
+ * @returns {Boolean}
+ */
+const checkHidden = (child) => {
+  child.check;
+};
+
+/**
  * Populates the preview element with formatted chat messages. Formats them according to:
  * - Whether or not they are over the byte limit
  * - Accordingly for the chat prefix used
@@ -1325,9 +1333,23 @@ document.onreadystatechange = () => {
     elements.mainMenu("filters-page");
   };
 
-  /** Scroll to the bottom of the chatbox when scrolled up */
+  /**
+   * Scroll to the bottom of the chatbox when scrolled up. Since we operate on filtered
+   * messages that may or may not be visible, we start from the bottom up checking their
+   * visibility; and scroll to the first one that isn't hidden.
+   */
   elements.chatScrollIndicator.onclick = function () {
-    elements.fileWatch.lastChild.scrollIntoView();
+    const c = elements.fileWatch.children.length;
+    dbgLog(`Checking ${c} elements ...`);
+    for (let i = c; i >= 0; i--) {
+      let child = elements.fileWatch.children.item(i);
+      if (!child) continue;
+      dbgLog(`-> Checking`, child);
+      if (child.checkVisibility()) {
+        child.scrollIntoView();
+        return;
+      }
+    }
   };
 
   /** When clicked, clear player filters and reset the chatype filters */
