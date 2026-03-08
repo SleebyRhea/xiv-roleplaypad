@@ -188,7 +188,6 @@ body {
         background-color: var(--p_shaded);
         cursor: pointer;
         user-select: none;
-        /* line-height: 1.2rem; */
         border-radius: 6px;
         padding-left: 5px;
         padding-right: 5px;
@@ -198,12 +197,47 @@ body {
         border: 1px solid var(--p_shaded);
       }
 
-      & a:hover {
+      & a.hide {
+        display: none;
+        color: red;
+        content: "✗";
+      }
+
+      & a.name:hover {
         text-decoration: 3px solid red line-through;
       }
 
       span:before {
         content: " ";
+      }
+    }
+
+    li.hide {
+      display: none;
+      & a.hide {
+        display: inline-block;
+        color: green;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+
+      & a.name {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+    }
+
+    li:hover,
+    li.hide:hover {
+      & a.hide {
+        display: inline-block !important;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+
+      & a.name {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
       }
     }
   }

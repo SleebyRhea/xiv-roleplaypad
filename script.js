@@ -848,6 +848,7 @@ const populateFilewatch = (settings, lines) => {
       return;
     }
 
+    let hide = document.createElement("a");
     let prefix = document.createElement("a");
 
     // If we've reached this, we /know/ this regex will match correctly as it is
@@ -867,13 +868,30 @@ const populateFilewatch = (settings, lines) => {
     // affix the name of the character to said element. When we click the prefix,
     // we handle toggling filtering the for user parsed from the log in question.
     prefix.onclick = () => toggleHidden(li);
+    hide.onclick = () => {
+      dbgLog("Hiding message ...");
+
+      if (li.classList.contains("hide")) {
+        li.classList.remove("hide");
+        hide.textContent = "✗";
+        return;
+      }
+
+      li.classList.add("hide");
+      hide.textContent = "✔";
+    };
+
     li.setAttribute("data-char-name", charName);
 
+    hide.classList.add("hide");
     prefix.classList.add(chatClass);
+    prefix.classList.add("name");
     span.classList.add(chatClass);
     prefix.textContent = match.groups.prefix;
     span.textContent = l;
+    hide.textContent = "✗";
 
+    li.appendChild(hide);
     li.appendChild(prefix);
     li.appendChild(span);
     li.appendChild(document.createElement("br"));
@@ -1432,6 +1450,7 @@ document.onreadystatechange = () => {
     elements.followIcon.hidden = false;
     elements.followIcon.onclick = followLog;
     elements.chatSoundObject.muted = false;
+    elements.chatSoundObject.volume = elements.chatSoundObject.volume / 2;
   }
 
   /* Make sure that the pad contents and our settings are saved just before we exit. */
