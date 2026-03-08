@@ -81,7 +81,7 @@ body {
 
   & ul#preview,
   ul#filewatch {
-    height: 60%;
+    height: 70%;
     border: none;
     outline: none;
     resize: none;
@@ -100,7 +100,7 @@ body {
     margin: inherit;
     padding: inherit;
     width: 60%;
-    height: 60%;
+    height: 70%;
     overflow-y: hidden;
     overflow-x: hidden;
     justify-content: space-between;
@@ -114,7 +114,7 @@ body {
       position: absolute;
       top: auto;
       right: 2px;
-      bottom: calc(40% + 3em);
+      bottom: calc(30% + 3em);
       z-index: 9999;
       cursor: pointer;
     }
@@ -345,7 +345,7 @@ body {
     position: fixed;
     bottom: 2rem;
     width: 100%;
-    height: calc(40% - 2rem);
+    height: calc(30% - 2rem);
     box-sizing: border-box;
     outline: none;
     resize: none;
