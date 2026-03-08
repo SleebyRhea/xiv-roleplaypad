@@ -12,8 +12,10 @@ const HAS_FILESYSTEM_API = window.showOpenFilePicker ? true : false;
 const CHAR_COUNT_OFFSET = 8;
 
 const KNOWN_NAMES = new Set();
-const HIDDEN_NAMES = {};
+const NAME_BLACKLIST = {};
+const NAME_WHITELIST = {};
 const HIDDEN_CHATS = {};
+const HIDDEN_MESSAGES = [];
 
 const TIMESTAMP_RE = /^\[\d+-\d+-\d+ +\d+:\d+(:?:\d+)?(?: ..)?\] /;
 const NEWLINE_RE = /\r?\n/;
@@ -89,11 +91,26 @@ const dbgLog = (...what) => {
 const all = (object) => {
   for (let key in object) {
     if (object[key] === null || object[key] === undefined) {
-      return [false, key];
+      return false;
     }
   }
 
-  return [true];
+  return true;
+};
+
+/**
+ * Get all keys in an object that map to null or undefined
+ * @param {Object} object
+ */
+const getNull = (object) => {
+  const nulls = [];
+  for (let key in object) {
+    if (object[key] === null || object[key] === undefined) {
+      nulls.push(key);
+    }
+  }
+
+  return nulls;
 };
 
 /**
@@ -391,6 +408,38 @@ class Settings {
   get previewName() {
     return this.#data.previewName;
   }
+
+  /**
+   * @param {Boolean} value
+   */
+  set doChatSound(value) {
+    return this.setEvent("doChatSound", () => {
+      this.#data.doChatSound = value;
+    });
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get doChatSound() {
+    return this.#data.doChatSound;
+  }
+
+  /**
+   * @param {String} value
+   */
+  set customChatSound(value) {
+    return this.setEvent("customChatSound", () => {
+      this.#data.customChatSound = value;
+    });
+  }
+
+  /**
+   * @returns {String}
+   */
+  get customChatSound() {
+    return this.#data.customChatSound;
+  }
 }
 
 var lastRun = [];
@@ -667,9 +716,9 @@ const processLine = (line, settings, prefix, singular) => {
 };
 
 const clearFilters = () => {
-  for (const n in HIDDEN_NAMES) {
-    document.head.removeChild(HIDDEN_NAMES[n]);
-    delete HIDDEN_NAMES[n];
+  for (const n in NAME_BLACKLIST) {
+    document.head.removeChild(NAME_BLACKLIST[n]);
+    delete NAME_BLACKLIST[n];
   }
 };
 
@@ -678,22 +727,23 @@ const clearFilters = () => {
  * @param {HTMLLinkElement} node
  */
 const toggleHidden = (node) => {
-  let name = node.getAttribute("data-charName");
+  let name = node.getAttribute("data-char-name");
+
   if (!name) {
     console.log("ERROR: Failed to get name from node:", node);
     return;
   }
 
-  if (HIDDEN_NAMES[name]) {
-    document.head.removeChild(HIDDEN_NAMES[name]);
-    delete HIDDEN_NAMES[name];
+  if (NAME_BLACKLIST[name]) {
+    document.head.removeChild(NAME_BLACKLIST[name]);
+    delete NAME_BLACKLIST[name];
     return;
   }
 
   let style = document.createElement("style");
 
   style.innerHTML = `
-    #editor > #filewatch-container > ul#filewatch > li[data-charName="${name}"] {
+    #editor > #filewatch-container > ul#filewatch > li[data-char-name="${name}"] {
       display: none;
       
       & a {
@@ -707,7 +757,7 @@ const toggleHidden = (node) => {
   `;
 
   document.head.appendChild(style);
-  HIDDEN_NAMES[name] = style;
+  NAME_BLACKLIST[name] = style;
 };
 
 /**
@@ -762,6 +812,7 @@ const toggleChat = (type, want) => {
  */
 const populateFilewatch = (settings, lines) => {
   let lastLine;
+  let countChanges = 0;
   let filewatch = document.querySelector("ul#filewatch");
   filewatch.parentElement.hidden = false;
   filewatch.parentElement.style.display = "flex";
@@ -816,7 +867,7 @@ const populateFilewatch = (settings, lines) => {
     // affix the name of the character to said element. When we click the prefix,
     // we handle toggling filtering the for user parsed from the log in question.
     prefix.onclick = () => toggleHidden(li);
-    li.setAttribute("data-charName", charName);
+    li.setAttribute("data-char-name", charName);
 
     prefix.classList.add(chatClass);
     span.classList.add(chatClass);
@@ -825,10 +876,15 @@ const populateFilewatch = (settings, lines) => {
 
     li.appendChild(prefix);
     li.appendChild(span);
+    li.appendChild(document.createElement("br"));
     filewatch.appendChild(li);
+
+    countChanges++;
 
     if (settings.doChatAutoscrolling) scrollTo(filewatch, li);
   });
+
+  return countChanges;
 };
 
 /**
@@ -927,8 +983,12 @@ const padSettings = new Settings("padSettings", {
   doAutoscroll: true,
 
   // Chatlog
+  doChatSound: true,
   doChatFiltering: true,
   doChatAutoscrolling: true,
+  customChatSound: "",
+
+  // Filters
   allowSay: true,
   allowTell: true,
   allowYell: false,
@@ -939,12 +999,8 @@ const padSettings = new Settings("padSettings", {
   allowFreecompany: true,
 });
 
-document.onreadystatechange = () => {
-  if (document.readyState !== "interactive") return;
-
-  var timeoutID = null;
-
-  const elements = {
+const queryElements = () => {
+  return {
     /////////////////
     // Application //
     /////////////////
@@ -961,9 +1017,12 @@ document.onreadystatechange = () => {
     /** @type {HTMLSpanElement} */
     chatScrollIndicator: document.querySelector("#chat-scroll-indicator"),
 
-    /////////////////////////
-    // Scratchpad Settings //
-    /////////////////////////
+    /** @type {HTMLAudioElement} */
+    chatSoundObject: document.querySelector("#message-received"),
+
+    //////////////
+    // Settings //
+    //////////////
 
     /** @type {HTMLInputElement} */
     spellcheckCheckbox: document.querySelector("#spellcheck"),
@@ -984,7 +1043,16 @@ document.onreadystatechange = () => {
     autoscrollCheckbox: document.querySelector("#set-autoscroll"),
 
     /** @type {HTMLInputElement} */
+    chatSoundCheckbox: document.querySelector("#mute-chat"),
+
+    /** @type {HTMLInputElement} */
     previewNameInput: document.querySelector("#set-preview-name"),
+
+    /** @type {HTMLInputElement} */
+    allFiltersCheckbox: document.querySelector("#enable-filters"),
+
+    /** @type {HTMLInputElement} */
+    chatAutoScrollCheckbox: document.querySelector("#enable-chat-autoscroll"),
 
     //////////////////////
     // Chatlog Settings //
@@ -1014,17 +1082,6 @@ document.onreadystatechange = () => {
     /** @type {HTMLInputElement} */
     freecompanyFilterCheckbox: document.querySelector("#enable-freecompany"),
 
-    /** @type {HTMLInputElement} */
-    allFiltersCheckbox: document.querySelector("#enable-filters"),
-
-    /** @type {HTMLInputElement} */
-    chatAutoScrollCheckbox: document.querySelector("#enable-chat-autoscroll"),
-
-    /** @type {HTMLStyleElement} */
-    doChatFilteringStyle: document.querySelector(
-      "style#disable-chat-filtering",
-    ),
-
     /////////////////////
     // Menus and Icons //
     /////////////////////
@@ -1043,7 +1100,30 @@ document.onreadystatechange = () => {
 
     /** @type {HTMLLinkElement} */
     filtersMenu: document.querySelector("#otherfilters-icon"),
+
+    /////////////////////
+    // Embedded Styles //
+    /////////////////////
+
+    /** @type {HTMLStyleElement} */
+    doChatFilteringStyle: document.querySelector(
+      "style#disable-chat-filtering",
+    ),
+
+    /** @type {HTMLStyleElement} */
+    hideFapiUsers: document.querySelector("style#default-hide-fapi"),
   };
+};
+
+document.onreadystatechange = () => {
+  if (document.readyState !== "interactive") return;
+
+  var timeoutID = null;
+
+  const elements = queryElements();
+
+  if (!all(elements))
+    throw `Cannot load, missing required elements: ${getNull(elements).join(", ")}`;
 
   const chatFilters = {
     say: elements.sayFilterCheckbox,
@@ -1055,10 +1135,6 @@ document.onreadystatechange = () => {
     linkshell: elements.linkshellFilterCheckbox,
     freecompany: elements.freecompanyFilterCheckbox,
   };
-
-  let allTruthy = all(elements);
-  if (!allTruthy[0])
-    throw `Cannot load, missing required elements: ${allTruthy[1]}`;
 
   const doUpdate = () => {
     return populatePreview(
@@ -1093,6 +1169,12 @@ document.onreadystatechange = () => {
   padSettings.linkCheckbox(
     "doChatAutoscrolling",
     elements.chatAutoScrollCheckbox,
+  );
+
+  padSettings.linkCheckbox(
+    "doChatSound",
+    elements.chatSoundObject,
+    (v) => (elements.chatSoundObject.muted = v),
   );
 
   // Chatbox filters
@@ -1140,12 +1222,14 @@ document.onreadystatechange = () => {
 
           elements.saveLink.click();
           break;
+
         case "o":
           event.preventDefault();
 
           if (!HAS_FILESYSTEM_API) return;
           elements.followIcon.click();
           break;
+
         case "/":
           event.preventDefault();
 
@@ -1233,91 +1317,11 @@ document.onreadystatechange = () => {
     scrollTo(elements.fileWatch, elements.fileWatch.lastChild);
   };
 
-  const followLog = async function () {
-    /** @type {FileSystemFileHandle} */
-    let fh;
-    let timeout;
-    let tailTimeoutID;
-    let lastModified = 0;
-    let lastLen = 0;
-
-    timeout = () => {
-      /**
-       * Ensure that we're returning an asyncronous function, and resetting our timeout
-       * @param {*} fn
-       * @returns
-       */
-      let complete = function (fn) {
-        return async () => {
-          await fn();
-          window.clearTimeout(tailTimeoutID);
-          tailTimeoutID = window.setTimeout(timeout, 1000);
-        };
-      };
-
-      /**
-       * Using the file handle received, set a timer every second to check the file for
-       * changes. If the timestamp for modification is less than now, pass. If the size is
-       * the same, pass. Repopulate the chatbox if its been updated.
-       */
-      tailTimeoutID = window.setTimeout(
-        complete(async () => {
-          let file = await fh.getFile();
-
-          if (file.lastModified <= lastModified) return;
-          if (file.size == lastLen) return;
-
-          if (file.size < lastLen) {
-            lastModified = file.lastModified;
-            lastLen = file.size;
-          }
-
-          let stream = await file.slice(lastLen, file.size).text();
-          lastLen = file.size;
-          lastModified = file.lastModified;
-
-          populateFilewatch(padSettings, stream.split(NEWLINE_RE));
-        }, 1000),
-      );
-    };
-
-    [fh] = await window.showOpenFilePicker();
-    tailTimeoutID = window.setTimeout(timeout, 1000);
-
-    elements.followIcon.classList.remove("unopened");
-    elements.followIcon.classList.add("opened");
-
-    /**
-     * Modify the followicon element classlist to alter the display of the icon, and
-     * upon closing of the chatbox, clear out userfilters.
-     */
-    elements.followIcon.onclick = () => {
-      window.clearTimeout(tailTimeoutID);
-
-      elements.followIcon.onclick = followLog;
-      elements.followIcon.classList.remove("opened");
-      elements.followIcon.classList.add("unopened");
-
-      elements.fileWatch.parentElement.hidden = true;
-      elements.fileWatch.parentElement.style.display = "none";
-
-      while (elements.fileWatch.hasChildNodes()) {
-        elements.fileWatch.removeChild(elements.fileWatch.firstChild);
-      }
-
-      clearFilters();
-      KNOWN_NAMES.clear();
-    };
-  };
-
   /**
    * If we have access to the File System API, then we can enable the log tailing
    * features. Display the icon, enable the feature, and prepare the scrollIndicator
    */
   if (HAS_FILESYSTEM_API) {
-    elements.followIcon.hidden = false;
-    elements.followIcon.onclick = followLog;
-
     elements.fileWatch.onscroll = () => {
       if (!elements.fileWatch.lastChild) return;
 
@@ -1331,6 +1335,99 @@ document.onreadystatechange = () => {
         elements.chatScrollIndicator.hidden = true;
       }
     };
+
+    const followLog = async function () {
+      /** @type {FileSystemFileHandle} */
+      let fh;
+
+      let timeout;
+      let tailTimeoutID;
+      let lastModified = 0;
+      let lastLen = 0;
+
+      /**
+       * Ensure that we're returning an asyncronous function, and resetting our timeout
+       * @param {*} fn
+       * @returns
+       */
+      const complete = function (fn) {
+        return async () => {
+          await fn();
+          window.clearTimeout(tailTimeoutID);
+          tailTimeoutID = window.setTimeout(timeout, 1000);
+        };
+      };
+
+      /**
+       * Using the file handle received, set a timer every second to check the file for
+       * changes. If the timestamp for modification is less than now, pass. If the size is
+       * the same, pass. Repopulate the chatbox if its been updated.
+       */
+      const onTimeout = async () => {
+        let file = await fh.getFile();
+
+        if (file.lastModified <= lastModified) return;
+        if (file.size == lastLen) return;
+
+        if (file.size < lastLen) {
+          lastModified = file.lastModified;
+          lastLen = file.size;
+        }
+
+        let stream = await file.slice(lastLen, file.size).text();
+        lastLen = file.size;
+        lastModified = file.lastModified;
+
+        let changeCount = populateFilewatch(
+          padSettings,
+          stream.split(NEWLINE_RE),
+        );
+
+        if (changeCount > 0) {
+          dbgLog(`New messages; play chat sound? ${padSettings.doChatSound}`);
+          if (padSettings.doChatSound) {
+            elements.chatSoundObject.play();
+          }
+        }
+      };
+
+      timeout = () => {
+        tailTimeoutID = window.setTimeout(complete(onTimeout, 1000));
+      };
+
+      [fh] = await window.showOpenFilePicker();
+      tailTimeoutID = window.setTimeout(timeout, 1000);
+
+      elements.followIcon.classList.remove("unopened");
+      elements.followIcon.classList.add("opened");
+
+      /**
+       * Modify the followicon element classlist to alter the display of the icon, and
+       * upon closing of the chatbox, clear out userfilters.
+       */
+      elements.followIcon.onclick = () => {
+        window.clearTimeout(tailTimeoutID);
+
+        elements.followIcon.onclick = followLog;
+        elements.followIcon.classList.remove("opened");
+        elements.followIcon.classList.add("unopened");
+
+        elements.fileWatch.parentElement.hidden = true;
+        elements.fileWatch.parentElement.style.display = "none";
+
+        while (elements.fileWatch.hasChildNodes()) {
+          elements.fileWatch.removeChild(elements.fileWatch.firstChild);
+        }
+
+        clearFilters();
+        KNOWN_NAMES.clear();
+      };
+    };
+
+    elements.hideFapiUsers.disabled = true;
+    elements.followIcon.hidden = false;
+    elements.followIcon.onclick = followLog;
+    elements.chatSoundObject.muted = false;
   }
 
   /* Make sure that the pad contents and our settings are saved just before we exit. */
