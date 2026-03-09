@@ -16,6 +16,7 @@ const NAME_BLACKLIST = {};
 const NAME_WHITELIST = {};
 const HIDDEN_CHATS = {};
 const HIDDEN_MESSAGES = [];
+const NAME_TRANSLATIONS = {};
 
 const TIMESTAMP_RE = /^\[\d+-\d+-\d+ +\d+:\d+(:?:\d+)?(?: ..)?\] /;
 const NEWLINE_RE = /\r?\n/;
@@ -295,6 +296,22 @@ class Settings {
     };
 
     cb(_self.#data[name]);
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get isFirstRun() {
+    return this.#data.isFirstRun;
+  }
+
+  /**
+   * @param {Boolean} value
+   */
+  set isFirstRun(value) {
+    return this.setEvent("isFirstRun", () => {
+      this.#data.isFirstRun = value;
+    });
   }
 
   /**
@@ -1004,6 +1021,7 @@ const getChatPrefix = () => {
 const padSettings = new Settings("padSettings", {
   // Scratchpad
   previewName: "Firstname L.",
+  isFirstRun: true,
 
   isOutOfCharacter: false,
   doSpellcheck: true,
@@ -1482,4 +1500,9 @@ document.onreadystatechange = () => {
   };
 
   doUpdate();
+
+  if (padSettings.isFirstRun) {
+    padSettings.isFirstRun = false;
+    elements.mainMenu("help-page");
+  }
 };

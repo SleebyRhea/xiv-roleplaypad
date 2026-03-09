@@ -22,7 +22,7 @@
     </style>
     <style id="default-hide-fapi">
       .needs-fapi {
-        display: hidden;
+        display: none !important;
       }
     </style>
     <audio id="message-received">
@@ -272,15 +272,26 @@
         <!-- HELP -->
         <div id="help-page" class="page-content" hidden>
           <h2>Help</h2>
-          <p>Simply type in the textbox box at the bottom, and go.</p>
+          <p>
+            Simply type in the textbox box at the bottom, and go. If you wish to
+            enter a newline, but do not wish to alter the formatting, prefix the
+            newline with: &gt&gt
+          </p>
           <p>
             Clicking the generated text will copy it, highlighting the
             background. Click again, or simply type, to unhighlight!
           </p>
+          <p class="needs-fapi">
+            By using the keybind Ctrl-o or pressing the ⟲ near the bottom right
+            of the page, you can select a snooper log file for this application
+            to track and display, with various filter options available.
+          </p>
           <hr />
           <h3>Keyboard Shortcuts</h3>
           <p><code>Ctrl-s</code>: Save to a file</p>
-          <p class="needs-fapi"><code>Ctrl-o</code>: Open a file</p>
+          <p class="needs-fapi">
+            <code>Ctrl-o</code>: Choose a log file to watch
+          </p>
           <p><code>Ctrl-/</code>: Open this help dialog</p>
         </div>
 
@@ -289,10 +300,12 @@
           <h2>XIV Roleplaypad</h2>
 
           <p>
-            A reimplementation of the basic features found in
+            Web based reimplementation of the basic features found in
             <a href="https://github.com/MythicPalette/Wordsmith-DalamudPlugin"
               >Wordsmith</a
-            >
+            >, with some extras thrown in. Originally forked from
+            <a href="https://github.com/browserpad/browserpad">browserpad</a>,
+            check that out too!
           </p>
           <p></p>
           <p>
