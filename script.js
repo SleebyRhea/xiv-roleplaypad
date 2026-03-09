@@ -1203,8 +1203,8 @@ document.onreadystatechange = () => {
 
   padSettings.linkCheckbox(
     "doChatSound",
-    elements.chatSoundObject,
-    (v) => (elements.chatSoundObject.muted = v),
+    elements.chatSoundCheckbox,
+    (v) => (elements.chatSoundCheckbox.muted = v),
   );
 
   // Chatbox filters
